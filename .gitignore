@@ -44,3 +44,7 @@ _deps
 *.app
 
 *.clang-format
+
+*.sh
+.cache/
+build/
