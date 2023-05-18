@@ -13,19 +13,22 @@
 
 namespace xutl {
 
+// 空参构造
 template <typename T>
 inline void construct(T* ptr) {
-    new (ptr) T();
+    ::new (ptr) T();
 }
 
+// 单个参数，左值
 template <typename T1, typename T2>
 inline void construct(T1* ptr, const T2& value) {
-    new (ptr) T1(value);
+    ::new (ptr) T1(value);
 }
 
+// 万能引用参数包，单个右值会匹配这个
 template <typename T, typename... Args>
 inline void construct(T* ptr, Args&&... value_packet) {
-    new (ptr) T();
+    ::new (ptr) T(xutl::forward<Args>(value_packet)...);
 }
 
 }  // namespace xutl
