@@ -65,12 +65,89 @@ struct iterator_traits<const T*> {
     using reference = const T&;
 };
 
+// 仅供内部库使用的语法糖
+template <typename Iterator>
+inline typename iterator_traits<Iterator>::iterator_category iterator_category(const Iterator&) {
+    using category = typename iterator_traits<Iterator>::iterator_category;
+    return category{};
+}
+
+template <typename Iterator>
+using _iterator_category_t = typename iterator_traits<Iterator>::iterator_category;
+
 // 常用函数
 // 标准规定，作为模板参数的迭代器，以算法所能接受的最低阶迭代器类别命名
 
 // 两个迭代器之间的距离
+template <typename InputIterator>
+typename iterator_traits<InputIterator>::difference_type distance(InputIterator first,
+                                                                  InputIterator last) {
+    return _distance(first, last, iterator_category(first));
+}
+
+template <typename InputIterator>
+typename iterator_traits<InputIterator>::difference_type _distance(InputIterator first,
+                                                                   InputIterator last,
+                                                                   input_iterator_tag) {
+    typename iterator_traits<InputIterator>::difference_type diff = 0;
+    while (first != last) {
+        ++first;
+        ++diff;
+    }
+    return diff;
+}
+
+template <typename RandomAccessIterator>
+typename iterator_traits<RandomAccessIterator>::difference_type _distance(
+    RandomAccessIterator first, RandomAccessIterator last, random_access_iterator_tag) {
+    return last - first;
+}
 
 // 使迭代器前进 n 位
+template <typename InputIterator, typename Distance>
+void advance(InputIterator& it, Distance n) {
+    _advance(it, n, iterator_category(it));
+}
+
+template <typename InputIterator, typename Distance>
+void _advance(InputIterator& it, Distance n, input_iterator_tag) {
+    while (n--) {
+        ++it;
+    }
+}
+
+template <typename BidirectionalIterator, typename Distance>
+void _advance(BidirectionalIterator it, Distance n, bidirectional_iterator_tag) {
+    if (n > 0) {
+        while (n--) {
+            ++it;
+        }
+    } else {
+        while (n++) {
+            --it;
+        }
+    }
+}
+
+template <typename RandomAccessIterator, typename Distance>
+void _advance(RandomAccessIterator it, Distance n, random_access_iterator_tag) {
+    it += n;
+}
+
+template <typename InputIterator>
+inline InputIterator next(InputIterator it,
+                          typename iterator_traits<InputIterator>::difference_type n = 1) {
+    advance(it, n);
+    return it;
+}
+
+template <typename BidirectionalIterator>
+inline BidirectionalIterator prev(
+    BidirectionalIterator it,
+    typename iterator_traits<BidirectionalIterator>::difference_type n = 1) {
+    advance(it, -n);
+    return it;
+}
 
 }  // namespace xutl
 
