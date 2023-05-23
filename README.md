@@ -9,6 +9,7 @@
 1. 一个 [`allocator`](XuTL/allocator.h) 类，它是对 `new` 和 `delete` 的封装，其中，用于构造的函数实现于 [construct.h](XuTL/construct.h) 中。
 2. 常用的工具函数，包括 `move`, `forward`, `swap`。
 3. `pair` 类。它与工具函数一起放在 [utils.h](XuTL/utils.h) 中。
+4. iteraotr 相关工具，包括 iterator_traits 相关，distance 和 advance 函数，都放在 [iterator.h](XuTL/iterator.h) 中。
 
 ## 参考资料
 
