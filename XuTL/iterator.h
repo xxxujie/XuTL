@@ -75,7 +75,7 @@ inline typename iterator_traits<Iterator>::iterator_category iterator_category(c
 template <typename Iterator>
 using _iterator_category_t = typename iterator_traits<Iterator>::iterator_category;
 
-// 常用函数
+// 迭代器相关算法
 // 标准规定，作为模板参数的迭代器，以算法所能接受的最低阶迭代器类别命名
 
 // 两个迭代器之间的距离

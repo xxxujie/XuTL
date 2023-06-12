@@ -17,30 +17,25 @@ namespace xutl {
 template <typename T>
 class allocator {
 public:
-    // type T 本身
+    // allocator 的嵌套类型
+
     using value_type = T;
-    // pointer to T
-    using pointer = T*;
-    // pointer to constant T
-    using const_pointer = const T*;
-    // reference to T
-    using reference = T&;
-    // reference to constant T
-    using const_reference = const T&;
-    // (unsigned int) size of the largest object in the allocation model
+    using pointer = value_type*;
+    using const_pointer = const value_type*;
+    using reference = value_type&;
+    using const_reference = const value_type&;
     using size_type = size_t;
-    // (int) difference between any two pointers in the allocation model
     using difference_type = std::ptrdiff_t;
 
     // 构造函数
-    inline explicit allocator() = default;
+    inline explicit allocator() noexcept = default;
 
-    // 复制构造函数
-    inline explicit allocator(const allocator&) = default;
+    // 拷贝构造函数
+    inline explicit allocator(const allocator&) noexcept = default;
 
-    // 泛化的复制构造函数
+    // 泛化的拷贝构造函数
     template <typename U>
-    inline explicit allocator(const allocator<U>&) {
+    inline explicit allocator(const allocator<U>&) noexcept {
     }
 
     // 析构函数

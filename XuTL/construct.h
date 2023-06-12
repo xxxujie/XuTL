@@ -30,14 +30,14 @@ inline void construct(T1* ptr, const T2& value) {
 
 // 万能引用参数包, 单个 rvalue 会匹配这个
 template <typename T, typename... Args>
-inline void construct(T* ptr, Args&&... value_packet) {
-    ::new (ptr) T(xutl::forward<Args>(value_packet)...);
+inline void construct(T* ptr, Args&&... args) {
+    ::new (ptr) T(xutl::forward<Args>(args)...);
 }
 
 // destructor: 用于析构对象
 // 两个版本: 1. 接受单个指针 2. 接受两个迭代器
-// 多次调用 trivial destructor 会浪费性能，尤其是版本 2 的范围可能很大，因此要判断类型 T 的
-// destructor 是否 trivial;
+// 重复调用 trivial destructor 会浪费性能，尤其是版本 2 的范围可能很大，因此要判断类型 T 的
+// destructor, trivial destructor 就什么都不用做
 
 // 版本 1
 template <typename T>
