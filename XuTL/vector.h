@@ -12,6 +12,13 @@
 
 namespace xutl {
 
+class vector_impl {
+public:
+};
+
+template <typename T, typename Alloc>
+struct vector_base {};
+
 template <typename T, typename Alloc = allocator<T>>
 class vector {
 public:
@@ -20,7 +27,7 @@ public:
     using value_type = T;
     using pointer = value_type*;
     using const_pointer = const value_type*;
-    using iterator = value_type*;
+    using iterator = value_type*;  // 普通指针足以作为 vector 的迭代器
     using const_iterator = const value_type*;
     using reference = value_type&;
     using const_reference = const value_type&;
@@ -37,7 +44,9 @@ protected:
     void fill_initialize(size_type n, const T& value) {
     }
 
-    iterator allocate_and_fill(size_type new_size, const T& x) {
+    // 分配空间并填满
+    iterator allocate_and_fill(size_type n, const T& value) {
+        iterator result = Alloc::allocate(n);
     }
 
 public:

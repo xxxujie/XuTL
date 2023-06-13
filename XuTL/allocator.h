@@ -29,15 +29,12 @@ public:
 
     // 构造函数
     inline explicit allocator() noexcept = default;
-
     // 拷贝构造函数
     inline explicit allocator(const allocator&) noexcept = default;
-
     // 泛化的拷贝构造函数
     template <typename U>
     inline explicit allocator(const allocator<U>&) noexcept {
     }
-
     // 析构函数
     inline ~allocator() = default;
 
@@ -47,14 +44,22 @@ public:
         using other = allocator<U>;
     };
 
-    // ::operator new 分配一块空间, 大小为 sizeof(T), 返回一个 void*,
-    // 并利用 static_cast 将 void* 转换成 T*
+    // 取址
+
+    pointer address(reference x) const {
+        return &x;
+    }
+    const_pointer address(const_reference x) const {
+        return &x;
+    }
+
+    // 分配空间
+    // ::operator new 返回一个 void*, 利用 static_cast 将 void* 转换成 T*
 
     // 分配一个大小为 sizeof(T) 的空间
     pointer allocate() {
         return static_cast<pointer>(::operator new(sizeof(value_type)));
     }
-
     // 分配 n 个大小为 sizeof(T) 的空间
     pointer allocate(size_type n) {
         if (n == 0) return nullptr;
@@ -67,7 +72,6 @@ public:
         if (ptr == nullptr) return;
         ::operator delete(ptr);
     }
-
     void deallocate(T* ptr, size_type) {
         if (ptr == nullptr) return;
         ::operator delete(ptr);
@@ -78,15 +82,12 @@ public:
     void construct(T* ptr) {
         xutl::construct(ptr);
     }
-
     void construct(T* ptr, const T& value) {
         xutl::construct(ptr, value);
     }
-
     void construct(T* ptr, T&& value) {
         xutl::construct(ptr, value);
     }
-
     template <typename... Args>
     void construct(T* ptr, Args&&... args) {
         xutl::construct(ptr, xutl::forward<Args>(args)...);
@@ -97,11 +98,15 @@ public:
     void destroy(T* ptr) {
         xutl::destroy(ptr);
     }
-
     void destroy(T* first, T* last) {
         xutl::destroy(first, last);
     }
 };
+
+// allocator traits
+
+template <typename T, typename Alloc>
+struct alloc_traits {};
 
 }  // namespace xutl
 
