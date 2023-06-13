@@ -103,6 +103,17 @@ public:
     }
 };
 
+// 比较操作
+
+template <typename T1, typename T2>
+inline bool operator==(const allocator<T1>&, const allocator<T2>&) {
+    return true;
+}
+template <typename T1, typename T2>
+inline bool operator!=(const allocator<T1>&, const allocator<T2>&) {
+    return false;
+}
+
 // allocator traits
 
 template <typename T, typename Alloc>
