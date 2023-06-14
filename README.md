@@ -37,5 +37,6 @@
 ## 参考资料
 
 1. GNU. [*gcc-11.3.0*](https://mirrors.aliyun.com/gnu/gcc/gcc-11.3.0).
-2. 侯捷. *STL 源码剖析*.
-3. Alinshans. [*MyTinySTL*](https://github.com/Alinshans/MyTinySTL). Github.
+2. GNU. [*gcc-2.95*](https://mirrors.aliyun.com/gnu/gcc/gcc-2.95).
+3. 侯捷. *STL 源码剖析*.
+4. Alinshans. [*MyTinySTL*](https://github.com/Alinshans/MyTinySTL). Github.
