@@ -2,8 +2,9 @@
 #define XUTL_ALLOCATOR_H_
 
 /**
- * 该文件包含一个模板类 allocator
- * allcator<T>: 用于分配和释放内存，构造和析构对象
+ * 该文件包含一个模板类 allocator 作为默认分配器.
+ * allocator<T>: 用于分配和释放内存，构造和析构对象.
+ * 该默认分配器是无状态的.
  */
 
 #include <cstddef>
@@ -114,10 +115,18 @@ inline bool operator!=(const allocator<T1>&, const allocator<T2>&) {
     return false;
 }
 
-// allocator traits
+// allocator_traits
 
-template <typename T, typename Alloc>
-struct alloc_traits {};
+template <typename Alloc>
+struct allocator_traits {
+    template <typename U>
+    struct rebind {
+        using type = typename Alloc::template rebind<U>::other;
+    };
+
+    using pointer = typename Alloc::pointer;
+    using const_pointer = typename Alloc::const_pointer;
+};
 
 }  // namespace xutl
 
