@@ -8,19 +8,20 @@
 
 1. allocator 类，它是对 `new` 和 `delete` 的封装，位于 [allocator.h](XuTL/allocator.h)。
 2. 用于构造和析构对象的函数，位于 [construct.h](XuTL/construct.h)。
+3. allocator_traits。
 
 ### Iterator 迭代器
 
-1. iterator 基类
-2. iterator_traits
-3. distance 函数
-4. advance 函数
+1. iterator 基类。
+2. iterator_traits。
+3. distance 函数。
+4. advance 函数。
 
-都位于 [iterator.h](XuTL/iterator.h)。
+均位于 [iterator.h](XuTL/iterator.h)。
 
 ### Container 容器
 
-1. vector 类，参考自 gcc-11.3.0，采用 vector_base_impl 架构（具体解释见代码注释），简化了 allocator 逻辑，直接限定所有 allocator 的值类型与 T 相同。位于 [vector.h](XuTL/vector.h)
+1. vector 类，参考自 gcc-11.3.0，采用 vector_base_impl 架构（具体解释见代码注释），简化了 allocator 逻辑，直接限定所有 allocator 的值类型与 T 相同。位于 [vector.h](XuTL/vector.h)。
 
 ### Algorithm 算法
 
