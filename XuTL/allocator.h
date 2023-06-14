@@ -73,9 +73,12 @@ public:
         if (ptr == nullptr) return;
         ::operator delete(ptr);
     }
-    void deallocate(T* ptr, size_type) {
+    void deallocate(T* ptr, size_type n) {
         if (ptr == nullptr) return;
-        ::operator delete(ptr);
+        while (n-- && ptr != nullptr) {
+            auto now = ptr++;
+            ::operator delete(now);
+        }
     }
 
     // 构造对象
@@ -121,7 +124,7 @@ template <typename Alloc>
 struct allocator_traits {
     template <typename U>
     struct rebind {
-        using type = typename Alloc::template rebind<U>::other;
+        using other = typename Alloc::template rebind<U>::other;
     };
 
     using pointer = typename Alloc::pointer;

@@ -6,6 +6,7 @@
  */
 
 #include <cstddef>
+#include <type_traits>
 #include <utility>
 
 #include "allocator.h"
@@ -23,16 +24,16 @@ namespace xutl {
 template <typename T, typename Alloc>
 struct vector_base {
 public:  // 声明 vector_impl
-    // Alloc<T>
-    using T_allocator_type = typename allocator_traits<Alloc>::template rebind<T>::other;
-    // 指向实际 Alloc<?> 中 ? 的指针
+    // Alloc<T>, 我在 vector 中规定 Alloc 的 value_type 必须和 T 相同
+    using allocator_type = typename allocator_traits<Alloc>::template rebind<T>::other;
+    // T*
     using pointer = typename allocator_traits<Alloc>::pointer;
 
     // vector 的数据成员一并放在 vector_impl 中
     struct vector_impl_data {
-        pointer start;
-        pointer finish;
-        pointer end_of_storage;
+        pointer start;           // 当前使用空间的头
+        pointer finish;          // 当前使用空间的尾
+        pointer end_of_storage;  // 当前可用空间的尾
 
         vector_impl_data() noexcept : start(nullptr), finish(nullptr), end_of_storage(nullptr) {
         }
@@ -48,34 +49,28 @@ public:  // 声明 vector_impl
     // 由于容器必须通过 traits 获取分配器相关信息, 所以 _Vector_impl 只有能够扮演 allocator
     // 的角色, 容器才能从中萃取信息. 也就是说, vector_impl 必须要 public 继承 allocator,
     // 建立 is-a 的关系.
-    struct vector_impl : public T_allocator_type, public vector_impl_data {
-        vector_impl() noexcept : T_allocator_type() {
+    struct vector_impl : public allocator_type, public vector_impl_data {
+        vector_impl() noexcept : allocator_type() {
         }
-        vector_impl(const T_allocator_type& alloc) : T_allocator_type(alloc) {
+        vector_impl(const allocator_type& alloc) : allocator_type(alloc) {
         }
         vector_impl(vector_impl&& x) noexcept
-            : T_allocator_type(std::move(x)), vector_impl_data(std::move(x)) {
+            : allocator_type(std::move(x)), vector_impl_data(std::move(x)) {
         }
-        vector_impl(T_allocator_type&& alloc) noexcept : T_allocator_type(std::move(alloc)) {
+        vector_impl(allocator_type&& alloc) noexcept : allocator_type(std::move(alloc)) {
         }
-        vector_impl(T_allocator_type&& alloc, vector_impl rv) noexcept
-            : T_allocator_type(std::move(alloc)), vector_impl(std::move(rv)) {
+        vector_impl(allocator_type&& alloc, vector_impl rv) noexcept
+            : allocator_type(std::move(alloc)), vector_impl(std::move(rv)) {
         }
     };
 
 public:
-    // Alloc<?>
-    using allocator_type = Alloc;
-
-    T_allocator_type& get_T_allocator() noexcept {
-        return this->impl;
-    }
-    const T_allocator_type& get_T_allocator() const noexcept {
+    allocator_type get_allocator() {
         return this->impl;
     }
 
-    allocator_type get_allocator() const noexcept {
-        return static_cast<allocator_type>(get_T_allocator());
+    const allocator_type get_allocator() const {
+        return this->impl;
     }
 
     // 构造函数
@@ -88,41 +83,69 @@ public:
     vector_base(size_t n, const allocator_type& alloc) : impl(alloc) {
         create_storage(n);
     }
-    vector_base(allocator_type&&) = default;
-    vector_base(T_allocator_type&& alloc) noexcept : impl(std::move(alloc)) {
+    vector_base(allocator_type&& alloc) noexcept : impl(std::move(alloc)) {
     }
-    vector_base(vector_base&& x, const allocator_type& alloc) : impl(alloc) {
-        if (x.get_allocator() == alloc) {}
+
+    // 析构函数
+    ~vector_base() noexcept {
+        deallocate(impl.start, impl.end_of_storage - impl.start);
     }
 
 public:
     vector_impl impl;
 
+    pointer allocate(size_t n) {
+        if (n != 0) {
+            return allocator_type::allocate(n);
+        } else {
+            return pointer();
+        }
+    }
+
+    void deallocate(pointer ptr, size_t n) {
+        allocator_type::deallocate(ptr, n);
+    }
+
 protected:
-    void create_storage(size_t n);
+    void create_storage(size_t n) {
+        this->impl.start = this->allocate(n);
+        this->impl.finish = this->impl.start;
+        this->impl.end_of_storage = this->impl.start + n;
+    }
 };
 
 template <typename T, typename Alloc = allocator<T>>
-class vector {
-public:
+class vector : protected vector_base<T, Alloc> {
+    static_assert(std::is_same<typename std::remove_cv<T>, T>::value,
+                  "xutl::vector 必须具有 non-const, non-volatile value_type");
+    static_assert(std::is_same<typename Alloc::value_type, T>::value,
+                  "xutl::vector 必须与其 allocator 具有相同的 value_type");
+
     // vector 的嵌套类型
 
+    using Base = vector_base<T, Alloc>;
+
+public:
     using value_type = T;
     using pointer = value_type*;
     using const_pointer = const value_type*;
-    using iterator = value_type*;  // 普通指针足以作为 vector 的迭代器
-    using const_iterator = const value_type*;
     using reference = value_type&;
     using const_reference = const value_type&;
     using size_type = size_t;
     using difference_type = ptrdiff_t;
+    using allocator_type = Alloc;
+    using iterator = value_type*;  // 普通指针足以作为 vector 的迭代器
+    using const_iterator = const value_type*;
 
-protected:
-    iterator start;           // 当前使用空间的头
-    iterator finish;          // 当前使用空间的尾
-    iterator end_of_storage;  // 当前可用空间的尾
+protected:  // 数据成员
+    using Base::allocate;
+    using Base::deallocate;
+    using Base::impl;
 
     // helper function: 一些 vector 的工具函数
+
+    void default_initialize(size_type n) {
+    }
 
     void fill_initialize(size_type n, const T& value) {
     }
@@ -133,23 +156,37 @@ protected:
     }
 
 public:
-    // 构造、拷贝、移动、析构函数
+    // 构造函数
 
-    vector();
+    vector() = default;
+    vector(const allocator_type& alloc) noexcept : Base(alloc) {
+    }
+    explicit vector(size_type n, const allocator_type& alloc = allocator_type()) : Base(n, alloc) {
+        default_initialize(n);
+    }
+    vector(size_type n, const value_type& value, const allocator_type& alloc = allocator_type())
+        : Base(n, alloc) {
+        fill_initialize(n, value);
+    }
+
+    // 拷贝构造函数
+
+    vector(const vector& x) : Base(x.size(), x.get_allocator()) {
+    }
 
     // 迭代器相关
 
     iterator begin() noexcept {
-        return start;
+        return static_cast<iterator>(this->impl.start);
     }
     iterator end() noexcept {
-        return finish;
+        return static_cast<iterator>(this->impl.finish);
     }
     const_iterator cbegin() const noexcept {
-        return start;
+        return static_cast<const_iterator>(this->impl.start);
     }
     const_iterator cend() const noexcept {
-        return finish;
+        return static_cast<const_iterator>(this->impl.finish);
     }
 
     // 容量相关
@@ -161,7 +198,7 @@ public:
         return static_cast<size_type>(end() - begin());
     }
     size_type capacity() const noexcept {
-        return static_cast<size_type>(end_of_storage - begin());
+        return static_cast<size_type>(this->impl.end_of_storage - begin());
     }
 
     // 元素访问
