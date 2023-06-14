@@ -157,12 +157,15 @@ protected:  // 数据成员
 public:
     // 构造函数
 
+    // 创建一个没有元素的 vector
     vector() = default;
     vector(const allocator_type& alloc) noexcept : Base(alloc) {
     }
+    // 创建一个元素为默认构造的 vector.
     explicit vector(size_type n, const allocator_type& alloc = allocator_type()) : Base(n, alloc) {
         default_initialize(n);
     }
+    // 创建一个元素为 value 拷贝的 vector.
     vector(size_type n, const value_type& value, const allocator_type& alloc = allocator_type())
         : Base(n, alloc) {
         fill_initialize(n, value);
