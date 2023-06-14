@@ -152,7 +152,6 @@ protected:  // 数据成员
 
     // 分配空间并填满
     iterator allocate_and_fill(size_type n, const T& value) {
-        iterator result = Alloc::allocate(n);
     }
 
 public:
