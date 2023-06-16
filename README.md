@@ -23,7 +23,7 @@
 
 ### Container 容器
 
-1. vector 类，参考自 gcc-11.3.0，采用 vector_base_impl 架构（具体解释见代码注释），简化了 allocator 逻辑，直接限定所有 allocator 的值类型与 T 相同。位于 [vector.h](XuTL/vector.h)。
+1. vector 类，gcc-11.3.0 中为 vector_base_impl 架构，但本项目不需要，因此所有实现均放在一个 vector 类中。位于 [vector.h](XuTL/vector.h)。
 
 ### Algorithm 算法
 
