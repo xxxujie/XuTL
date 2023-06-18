@@ -15,6 +15,10 @@ ForwardIter unchecked_uninit_copy(InputIter first, InputIter last, ForwardIter r
                                   std::true_type) {
 }
 
+template <typename ForwardIterator, typename Size, typename T>
+inline void uninitialized_fill_n(ForwardIterator first, Size n, const T& x) {
+}
+
 }  // namespace xutl
 
 #endif  // XUTL_UNINITIALIZED_H_

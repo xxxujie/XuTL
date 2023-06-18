@@ -118,19 +118,6 @@ inline bool operator!=(const allocator<T1>&, const allocator<T2>&) {
     return false;
 }
 
-// allocator_traits
-
-template <typename Alloc>
-struct allocator_traits {
-    template <typename U>
-    struct rebind {
-        using other = typename Alloc::template rebind<U>::other;
-    };
-
-    using pointer = typename Alloc::pointer;
-    using const_pointer = typename Alloc::const_pointer;
-};
-
 }  // namespace xutl
 
 #endif  // XUTL_ALLOCATOR_H_

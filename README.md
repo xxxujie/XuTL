@@ -10,20 +10,20 @@
 
 1. allocator 类，它是对 `new` 和 `delete` 的封装，位于 [allocator.h](XuTL/allocator.h)。
 2. 用于构造和析构对象的函数，位于 [construct.h](XuTL/construct.h)。
-3. allocator_traits。
 
 ### Iterator 迭代器
 
 1. iterator 基类。
-2. iterator_traits。
-3. distance 函数。
-4. advance 函数。
+2. reverse_iterator 类。
+3. iterator_traits。
+4. distance 函数。
+5. advance 函数。
 
 均位于 [iterator.h](XuTL/iterator.h)。
 
 ### Container 容器
 
-1. vector 类，gcc-11.3.0 中为 vector_base_impl 架构，但本项目不需要，因此所有实现均放在一个 vector 类中。位于 [vector.h](XuTL/vector.h)。
+1. vector 类，gcc-11.3.0 中为 vector_base_impl 架构，但本项目不需要，因此所有实现均放在一个 vector 类中，另外，本项目禁止了 `vector<bool>`。位于 [vector.h](XuTL/vector.h)。
 
 ### Algorithm 算法
 
@@ -38,7 +38,8 @@
 
 ## 参考资料
 
+1. LLVM. [*libc++ 3.9.1*](https://releases.llvm.org/download.html).
 1. GNU. [*gcc-11.3.0*](https://mirrors.aliyun.com/gnu/gcc/gcc-11.3.0).
 2. GNU. [*gcc-2.95*](https://mirrors.aliyun.com/gnu/gcc/gcc-2.95).
-3. 侯捷. *STL 源码剖析*.
-4. Alinshans. [*MyTinySTL*](https://github.com/Alinshans/MyTinySTL). Github.
+3. Alinshans. [*MyTinySTL*](https://github.com/Alinshans/MyTinySTL). Github.
+4. 侯捷. *STL 源码剖析*.
