@@ -133,17 +133,8 @@ private:
         }
     }
     // 在迭代器范围内构造
-
-    // 填满，即分配空间并构造，用于构造函数
-    void fill_init(size_type n) {
-        allocate(n);
-        construct_at_end(n);
-    }
-    void fill_init(size_type n, const_reference value) {
-        allocate(n);
-        construct_at_end(n, value);
-    }
-    void fill_init() {
+    template <typename ForwardIterator>
+    void construct_at_end(ForwardIterator first, ForwardIterator last, size_type n) {
     }
 
 public:
@@ -154,13 +145,15 @@ public:
     // 创建一个元素为默认构造的 vector.
     explicit vector(size_type n) {
         if (n > 0) {
-            fill_init(n);
+            allocate(n);
+            construct_at_end(n);
         }
     }
     // 创建一个元素为 value 拷贝的 vector.
     vector(size_type n, const_reference value) {
         if (n > 0) {
-            fill_init(n, value);
+            allocate(n);
+            construct_at_end(n, value);
         }
     }
 
