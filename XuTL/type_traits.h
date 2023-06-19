@@ -1,6 +1,8 @@
 #ifndef XUTL_TYPE_TRAITS_H_
 #define XUTL_TYPE_TRAITS_H_
 
+#include <type_traits>
+
 namespace xutl {
 
 // helper class:
@@ -20,6 +22,7 @@ using true_type = integral_constant<bool, true>;
 using false_type = integral_constant<bool, false>;
 
 // enable_if
+
 template <bool, typename T = void>
 struct enable_if {};
 
@@ -27,6 +30,9 @@ template <typename T>
 struct enable_if<true, T> {
     using type = T;
 };
+
+// is_convertible
+using std::is_convertible;
 
 }  // namespace xutl
 

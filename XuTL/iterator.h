@@ -7,6 +7,8 @@
 
 #include <cstddef>
 
+#include "type_traits.h"
+
 namespace xutl {
 
 // 五种迭代器类别标签, 以类的形式表示
@@ -66,14 +68,35 @@ struct iterator_traits<const T*> {
 };
 
 // 仅供内部库使用的语法糖
-template <typename Iterator>
-inline typename iterator_traits<Iterator>::iterator_category iterator_category(const Iterator&) {
-    using category = typename iterator_traits<Iterator>::iterator_category;
-    return category{};
-}
+
+template <typename IteratorFrom, typename CategoryTo>
+struct has_iterator_category_convertible_to
+    : public xutl::integral_constant<
+          bool, is_convertible<typename iterator_traits<IteratorFrom>::iterator_category,
+                               CategoryTo>::value> {};
 
 template <typename Iterator>
-using _iterator_category_t = typename iterator_traits<Iterator>::iterator_category;
+struct is_input_iterator
+    : public has_iterator_category_convertible_to<Iterator, input_iterator_tag> {};
+
+template <typename Iterator>
+struct is_forward_iterator
+    : public has_iterator_category_convertible_to<Iterator, forward_iterator_tag> {};
+
+template <typename Iterator>
+struct is_bidirectional_iterator
+    : public has_iterator_category_convertible_to<Iterator, bidirectional_iterator_tag> {};
+
+template <typename Iterator>
+struct is_random_access_iterator
+    : public has_iterator_category_convertible_to<Iterator, random_access_iterator_tag> {};
+
+template <typename Iterator>
+struct is_exactly_input_iterator
+    : public integral_constant<
+          bool, has_iterator_category_convertible_to<Iterator, input_iterator_tag>::value &&
+                    !has_iterator_category_convertible_to<Iterator, forward_iterator_tag>::value> {
+};
 
 // 迭代器相关算法
 // 标准规定，作为模板参数的迭代器，以算法所能接受的最低阶迭代器类别命名
