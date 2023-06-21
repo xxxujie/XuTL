@@ -11,7 +11,9 @@
 
 namespace xutl {
 
+// ******************************************************************
 // 五种迭代器类别标签, 以类的形式表示
+// ******************************************************************
 
 struct input_iterator_tag {};
 struct output_iterator_tag {};
@@ -19,7 +21,9 @@ struct forward_iterator_tag : public input_iterator_tag {};
 struct bidirectional_iterator_tag : public forward_iterator_tag {};
 struct random_access_iterator_tag : public bidirectional_iterator_tag {};
 
-// 通用 iterator template, 所有 iterator 定义都要继承它
+// ******************************************************************
+// iterator 基类
+// ******************************************************************
 
 template <typename Category, typename T, typename Distance = std::ptrdiff_t, typename Pointer = T*,
           typename Reference = T&>
@@ -36,7 +40,9 @@ struct iterator {
     using reference = Reference;
 };
 
+// ******************************************************************
 // iterator traits
+// ******************************************************************
 
 template <typename Iterator>
 struct iterator_traits {
@@ -68,7 +74,6 @@ struct iterator_traits<const T*> {
 };
 
 // 仅供内部库使用的语法糖
-
 template <typename IteratorFrom, typename CategoryTo>
 struct has_iterator_category_convertible_to
     : public xutl::integral_constant<
@@ -98,15 +103,12 @@ struct is_exactly_input_iterator
                     !has_iterator_category_convertible_to<Iterator, forward_iterator_tag>::value> {
 };
 
+// ******************************************************************
 // 迭代器相关算法
 // 标准规定，作为模板参数的迭代器，以算法所能接受的最低阶迭代器类别命名
+// ******************************************************************
 
-// 两个迭代器之间的距离
-template <typename InputIterator>
-typename iterator_traits<InputIterator>::difference_type distance(InputIterator first,
-                                                                  InputIterator last) {
-    return _distance(first, last, iterator_category(first));
-}
+// distance：两个迭代器之间的距离
 
 template <typename InputIterator>
 typename iterator_traits<InputIterator>::difference_type _distance(InputIterator first,
@@ -126,11 +128,13 @@ typename iterator_traits<RandomAccessIterator>::difference_type _distance(
     return last - first;
 }
 
-// 使迭代器前进 n 位
-template <typename InputIterator, typename Distance>
-void advance(InputIterator& it, Distance n) {
-    _advance(it, n, iterator_category(it));
+template <typename InputIterator>
+typename iterator_traits<InputIterator>::difference_type distance(InputIterator first,
+                                                                  InputIterator last) {
+    return _distance(first, last, iterator_category(first));
 }
+
+// advance：使迭代器前进 n 位
 
 template <typename InputIterator, typename Distance>
 void _advance(InputIterator& it, Distance n, input_iterator_tag) {
@@ -157,12 +161,21 @@ void _advance(RandomAccessIterator it, Distance n, random_access_iterator_tag) {
     it += n;
 }
 
+template <typename InputIterator, typename Distance>
+void advance(InputIterator& it, Distance n) {
+    _advance(it, n, iterator_category(it));
+}
+
+// next：当前迭代器的后 n 位，n 默认为 1
+
 template <typename InputIterator>
 inline InputIterator next(InputIterator it,
                           typename iterator_traits<InputIterator>::difference_type n = 1) {
     advance(it, n);
     return it;
 }
+
+// prev：当前迭代器的前 n 位，n 默认为 1
 
 template <typename BidirectionalIterator>
 inline BidirectionalIterator prev(
