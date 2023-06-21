@@ -82,6 +82,7 @@ protected:
     }
 };
 
+// vector 类
 template <typename T>
 class vector : private vector_base<T> {
 public:
