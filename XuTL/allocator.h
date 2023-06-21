@@ -7,13 +7,52 @@
  * 该默认分配器是无状态的.
  */
 
-#include <cstddef>
-#include <new>
+#include <string.h>
 
 #include "construct.h"
+#include "type_traits.h"
 #include "utils.h"
 
 namespace xutl {
+
+// ******************************************************************
+// allocator_traits / helper classes
+// ******************************************************************
+
+// allocator_has_construct
+// allocator 是否具有 construct 函数
+
+// 利用逗号表达式，实际上返回值就是 true_type，前者仅用于 SFINAE
+template <typename Alloc, typename T, typename... Args>
+decltype(xutl::declval<Alloc>().construct(xutl::declval<T*>(), xutl::declval<Args>()...),
+         true_type())
+_allocator_has_construct_test(Alloc&& alloc, T* ptr, Args&&... args);
+
+template <typename Alloc, typename T, typename... Args>
+false_type _allocator_has_construct_test(const Alloc& a, T* ptr, Args&&... args);
+
+template <typename Alloc, typename Pointer, class... Args>
+struct allocator_has_construct
+    : integral_constant<
+          bool, xutl::is_same<decltype(_allocator_has_construct_test(
+                                  declval<Alloc>(), declval<Pointer>(), declval<Args>()...)),
+                              true_type>::value> {};
+
+// to_raw_pointer
+// 转型为内置指针
+
+template <typename T>
+inline T* to_raw_pointer(T* ptr) noexcept {
+    return ptr;
+}
+template <typename Pointer>
+inline typename Pointer::element_type* to_raw_pointer(Pointer ptr) noexcept {
+    return xutl::to_raw_pointer(ptr.operator->());
+}
+
+// ******************************************************************
+// allocator 类
+// ******************************************************************
 
 template <typename T>
 class allocator {
@@ -27,6 +66,7 @@ public:
     using const_reference = const value_type&;
     using size_type = size_t;
     using difference_type = std::ptrdiff_t;
+    using allocator_type = allocator<T>;
 
     // 构造函数
     inline explicit allocator() noexcept = default;
@@ -86,15 +126,32 @@ public:
     void construct(T* ptr) {
         xutl::construct(ptr);
     }
-    void construct(T* ptr, const T& value) {
-        xutl::construct(ptr, value);
-    }
-    void construct(T* ptr, T&& value) {
-        xutl::construct(ptr, value);
-    }
     template <typename... Args>
     void construct(T* ptr, Args&&... args) {
         xutl::construct(ptr, xutl::forward<Args>(args)...);
+    }
+
+    // 用 [begin1, end1) 的元素构造以 begin2 为起点的空间
+    template <typename Iterator, typename Pointer>
+    void construct_range_forward(Iterator begin1, Iterator end1, Pointer begin2) {
+        while (begin1 != end1) {
+            xutl::construct(to_raw_pointer(begin2), *begin1);
+            ++begin1;
+            ++begin2;
+        }
+    }
+    // 对于无构造函数类型的 SFINAE
+    template <typename U>
+    typename enable_if<!allocator_has_construct<allocator_type, U*, U>::value &&
+                           xutl::is_trivially_move_constructible<U>::value,
+                       void>::type
+    construct_range_forward(U* begin1, U* end1, U*& begin2) {
+        using V = typename xutl::remove_cv<T>::type;
+        difference_type n = end1 - begin1;
+        if (n > 0) {
+            memcpy(const_cast<V>(begin2), begin1, n * sizeof(T));
+            begin2 += n;
+        }
     }
 
     // 析构对象

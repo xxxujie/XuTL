@@ -8,6 +8,7 @@
 #include "allocator.h"
 #include "debugdef.h"
 #include "iterator.h"
+#include "type_traits.h"
 
 namespace xutl {
 
@@ -35,48 +36,48 @@ protected:
 
     // 数据成员
 
-    pointer start = nullptr;                           // 已用空间的头
-    pointer finish = nullptr;                          // 已用空间的尾
-    pointer end_of_storage = nullptr;                  // 可用空间的尾
-    allocator_type data_allocator = allocator_type();  // 分配器
+    pointer _start = nullptr;                           // 已用空间的头
+    pointer _finish = nullptr;                          // 已用空间的尾
+    pointer _end_of_storage = nullptr;                  // 可用空间的尾
+    allocator_type _data_allocator = allocator_type();  // 分配器
 
     // 构造函数
 
     vector_base() noexcept = default;
     ~vector_base() {
-        clear();
-        data_allocator.deallocate(start, capacity());
+        _clear();
+        _data_allocator.deallocate(_start, _capacity());
     }
 
     // 清空元素，即析构所有元素
-    inline void clear() noexcept {
-        destroy_at_end(start);
+    inline void _clear() noexcept {
+        _destroy_at_end(_start);
     }
 
     // 可用空间
-    inline size_type capacity() const noexcept {
-        return static_cast<size_type>(end_of_storage - start);
+    inline size_type _capacity() const noexcept {
+        return static_cast<size_type>(_end_of_storage - _start);
     }
 
     // 从末尾开始析构，一直达到新末尾
-    inline void destroy_at_end(pointer new_end) noexcept {
-        while (new_end != finish) {
-            data_allocator.destroy(--finish);
+    inline void _destroy_at_end(pointer new_end) noexcept {
+        while (new_end != _finish) {
+            _data_allocator.destroy(--_finish);
         }
     }
 
     // 为 n 个对象分配空间
-    void allocate(size_type n) {
-        finish = start = data_allocator.allocate(n);
-        end_of_storage = start + n;
+    void _allocate(size_type n) {
+        _finish = _start = _data_allocator.allocate(n);
+        _end_of_storage = _start + n;
     }
 
     // 回收所有空间
-    void deallocate() noexcept {
-        if (start != nullptr) {
-            clear();
-            data_allocator.deallocate(start, capacity());
-            start = finish = end_of_storage = nullptr;
+    void _deallocate() noexcept {
+        if (_start != nullptr) {
+            _clear();
+            _data_allocator.deallocate(_start, _capacity());
+            _start = _finish = _end_of_storage = nullptr;
         }
     }
 };
@@ -109,32 +110,34 @@ public:
 
 private:
     // 数据成员
-    using base::data_allocator;
-    using base::end_of_storage;
-    using base::finish;
-    using base::start;
+    using base::_data_allocator;
+    using base::_end_of_storage;
+    using base::_finish;
+    using base::_start;
 
     // 分配和回收内存空间 allocate() 和 deallocate()
-    using base::allocate;
-    using base::deallocate;
+    using base::_allocate;
+    using base::_deallocate;
 
     // 构造和析构元素 construct_at_end() 和 destroy_at_end()
 
     // 默认构造
-    void construct_at_end(size_type n) {
+    void _construct_at_end(size_type n) {
         while (--n) {
-            data_allocator.construct(finish++);
+            _data_allocator.construct(_finish++);
         }
     }
     // 用 value 构造
-    void construct_at_end(size_type n, const_reference value) {
+    void _construct_at_end(size_type n, const_reference value) {
         while (--n) {
-            data_allocator.construct(finish++, value);
+            _data_allocator.construct(_finish++, value);
         }
     }
-    // 在迭代器范围内构造
+    // 用迭代器范围内的值构造
     template <typename ForwardIterator>
-    void construct_at_end(ForwardIterator first, ForwardIterator last, size_type n) {
+    typename enable_if<is_forward_iterator<ForwardIterator>::value, void>::type _construct_at_end(
+        ForwardIterator first, ForwardIterator last, size_type n) {
+        construct_range_forward(first, last, end());
     }
 
 public:
@@ -145,15 +148,15 @@ public:
     // 创建一个元素为默认构造的 vector.
     explicit vector(size_type n) {
         if (n > 0) {
-            allocate(n);
-            construct_at_end(n);
+            _allocate(n);
+            _construct_at_end(n);
         }
     }
     // 创建一个元素为 value 拷贝的 vector.
     vector(size_type n, const_reference value) {
         if (n > 0) {
-            allocate(n);
-            construct_at_end(n, value);
+            _allocate(n);
+            _construct_at_end(n, value);
         }
     }
 
@@ -161,22 +164,36 @@ public:
 
     vector(const vector& x) {
         size_type n = x.size();
-        if (n > 0) {}
+        if (n > 0) {
+            _allocate(n);
+            _construct_at_end(x.begin(), x.end(), n);
+        }
+    }
+    vector(vector&& x) noexcept {
+        _start = x._start;
+        _finish = x._finish;
+        _end_of_storage = x._end_of_storage;
+        x._start = x._finish = x._end_of_storage = nullptr;
+    }
+
+    // 析构所有元素
+    inline void clear() noexcept {
+        base::_clear();
     }
 
     // 迭代器相关
 
     inline iterator begin() noexcept {
-        return static_cast<iterator>(start);
+        return static_cast<iterator>(_start);
     }
     inline iterator end() noexcept {
-        return static_cast<iterator>(finish);
+        return static_cast<iterator>(_finish);
     }
     inline const_iterator cbegin() const noexcept {
-        return static_cast<const_iterator>(start);
+        return static_cast<const_iterator>(_start);
     }
     inline const_iterator cend() const noexcept {
-        return static_cast<const_iterator>(finish);
+        return static_cast<const_iterator>(_finish);
     }
 
     // 容量相关
@@ -189,7 +206,7 @@ public:
     }
 
     inline size_type capacity() const noexcept {
-        return base::capacity();
+        return base::_capacity();
     }
 
     // 元素访问

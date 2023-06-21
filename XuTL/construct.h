@@ -6,7 +6,6 @@
  */
 
 #include <new>
-#include <type_traits>
 
 #include "iterator.h"
 #include "utils.h"
@@ -20,12 +19,6 @@ namespace xutl {
 template <typename T>
 inline void construct(T* ptr) {
     ::new (ptr) T();
-}
-
-// 单个参数
-template <typename T1, typename T2>
-inline void construct(T1* ptr, const T2& value) {
-    ::new (ptr) T1(value);
 }
 
 // 万能引用参数包, 单个 rvalue 会匹配这个
