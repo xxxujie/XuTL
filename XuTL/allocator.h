@@ -24,19 +24,22 @@ namespace xutl {
 
 // 利用逗号表达式，实际上返回值就是 true_type，前者仅用于 SFINAE
 template <typename Alloc, typename T, typename... Args>
-decltype(xutl::declval<Alloc>().construct(xutl::declval<T*>(), xutl::declval<Args>()...),
+decltype(xutl::declval<Alloc>().construct(xutl::declval<T*>(),
+                                          xutl::declval<Args>()...),
          true_type())
 _allocator_has_construct_test(Alloc&& alloc, T* ptr, Args&&... args);
 
 template <typename Alloc, typename T, typename... Args>
-false_type _allocator_has_construct_test(const Alloc& a, T* ptr, Args&&... args);
+false_type _allocator_has_construct_test(const Alloc& a, T* ptr,
+                                         Args&&... args);
 
 template <typename Alloc, typename Pointer, class... Args>
 struct allocator_has_construct
-    : integral_constant<
-          bool, xutl::is_same<decltype(_allocator_has_construct_test(
-                                  declval<Alloc>(), declval<Pointer>(), declval<Args>()...)),
-                              true_type>::value> {};
+    : integral_constant<bool,
+                        xutl::is_same<decltype(_allocator_has_construct_test(
+                                          declval<Alloc>(), declval<Pointer>(),
+                                          declval<Args>()...)),
+                                      true_type>::value> {};
 
 // to_raw_pointer
 // 转型为内置指针
@@ -56,7 +59,7 @@ inline typename Pointer::element_type* to_raw_pointer(Pointer ptr) noexcept {
 
 template <typename T>
 class allocator {
-public:
+  public:
     // allocator 的嵌套类型
 
     using value_type = T;
@@ -133,7 +136,8 @@ public:
 
     // 用 [begin1, end1) 的元素构造以 begin2 为起点的空间
     template <typename Iterator, typename Pointer>
-    void construct_range_forward(Iterator begin1, Iterator end1, Pointer begin2) {
+    void construct_range_forward(Iterator begin1, Iterator end1,
+                                 Pointer begin2) {
         while (begin1 != end1) {
             xutl::construct(to_raw_pointer(begin2), *begin1);
             ++begin1;

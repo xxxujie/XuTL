@@ -29,8 +29,9 @@ inline void construct(T* ptr, Args&&... args) {
 
 // destructor: 用于析构对象
 // 两个版本: 1. 接受单个指针 2. 接受两个迭代器
-// 重复调用 trivial destructor 会浪费性能，尤其是版本 2 的范围可能很大，因此要判断类型 T 的
-// destructor, trivial destructor 就什么都不用做
+// 重复调用 trivial destructor 会浪费性能，尤其是版本 2
+// 的范围可能很大，因此要判断类型 T 的 destructor, trivial destructor
+// 就什么都不用做
 
 // 版本 1
 template <typename T>
@@ -42,9 +43,10 @@ inline void destroy(T* ptr) {
 // 版本 2
 template <typename ForwardIterator>
 void destroy(ForwardIterator first, ForwardIterator last) {
-    _destroy_iterator(first, last,
-                      std::is_trivially_destructible<
-                          typename iterator_traits<ForwardIterator>::value_type>::type);
+    _destroy_iterator(
+        first, last,
+        std::is_trivially_destructible<
+            typename iterator_traits<ForwardIterator>::value_type>::type);
 }
 
 // 版本 1, 对于 trivial destructor
@@ -62,12 +64,14 @@ inline void _destroy_pointer(T* ptr, std::false_type) {
 
 // 版本 2, 对于 trivial destructor
 template <typename ForwardIterator>
-void _destroy_iterator(ForwardIterator first, ForwardIterator last, std::true_type) {
+void _destroy_iterator(ForwardIterator first, ForwardIterator last,
+                       std::true_type) {
 }
 
 // 版本 2, 对于 nontrivial destructor
 template <typename ForwardIterator>
-void _destroy_iterator(ForwardIterator first, ForwardIterator last, std::false_type) {
+void _destroy_iterator(ForwardIterator first, ForwardIterator last,
+                       std::false_type) {
     while (first++ != last) {
         // auto current = &*first;
         destroy(&*first);

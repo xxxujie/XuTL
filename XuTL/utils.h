@@ -22,7 +22,8 @@ inline T&& forward(typename xutl::remove_reference<T>::type& t) noexcept {
 // 接受 rvalue 的版本
 template <typename T>
 inline T&& forward(typename xutl::remove_reference<T>::type&& t) noexcept {
-    static_assert(!xutl::is_lvalue_reference<T>::value, "can not forward an rvalue as an lvalue.");
+    static_assert(!xutl::is_lvalue_reference<T>::value,
+                  "can not forward an rvalue as an lvalue.");
     return static_cast<T&&>(t);
 }
 

@@ -2,7 +2,8 @@
 #define XUTL_ITERATOR_H_
 
 /**
- * 该文件包含迭代器相关的东西, 包括五种迭代器类别标签，一个迭代器类模板, 以及 iterator_traits
+ * 该文件包含迭代器相关的东西, 包括五种迭代器类别标签，一个迭代器类模板, 以及
+ * iterator_traits
  */
 
 #include <cstddef>
@@ -25,8 +26,8 @@ struct random_access_iterator_tag : public bidirectional_iterator_tag {};
 // iterator 基类
 // ************************************************************************************
 
-template <typename Category, typename T, typename Distance = std::ptrdiff_t, typename Pointer = T*,
-          typename Reference = T&>
+template <typename Category, typename T, typename Distance = std::ptrdiff_t,
+          typename Pointer = T*, typename Reference = T&>
 struct iterator {
     // 五种迭代器类别标签之一
     using iterator_category = Category;
@@ -77,30 +78,39 @@ struct iterator_traits<const T*> {
 template <typename IteratorFrom, typename CategoryTo>
 struct has_iterator_category_convertible_to
     : public xutl::integral_constant<
-          bool, is_convertible<typename iterator_traits<IteratorFrom>::iterator_category,
-                               CategoryTo>::value> {};
+          bool, is_convertible<
+                    typename iterator_traits<IteratorFrom>::iterator_category,
+                    CategoryTo>::value> {};
 
 template <typename Iterator>
 struct is_input_iterator
-    : public has_iterator_category_convertible_to<Iterator, input_iterator_tag> {};
+    : public has_iterator_category_convertible_to<Iterator,
+                                                  input_iterator_tag> {};
 
 template <typename Iterator>
 struct is_forward_iterator
-    : public has_iterator_category_convertible_to<Iterator, forward_iterator_tag> {};
+    : public has_iterator_category_convertible_to<Iterator,
+                                                  forward_iterator_tag> {};
 
 template <typename Iterator>
 struct is_bidirectional_iterator
-    : public has_iterator_category_convertible_to<Iterator, bidirectional_iterator_tag> {};
+    : public has_iterator_category_convertible_to<Iterator,
+                                                  bidirectional_iterator_tag> {
+};
 
 template <typename Iterator>
 struct is_random_access_iterator
-    : public has_iterator_category_convertible_to<Iterator, random_access_iterator_tag> {};
+    : public has_iterator_category_convertible_to<Iterator,
+                                                  random_access_iterator_tag> {
+};
 
 template <typename Iterator>
 struct is_exactly_input_iterator
-    : public integral_constant<
-          bool, has_iterator_category_convertible_to<Iterator, input_iterator_tag>::value &&
-                    !has_iterator_category_convertible_to<Iterator, forward_iterator_tag>::value> {
+    : public integral_constant<bool,
+                               has_iterator_category_convertible_to<
+                                   Iterator, input_iterator_tag>::value &&
+                                   !has_iterator_category_convertible_to<
+                                       Iterator, forward_iterator_tag>::value> {
 };
 
 // ************************************************************************************
@@ -111,9 +121,8 @@ struct is_exactly_input_iterator
 // distance：两个迭代器之间的距离
 
 template <typename InputIterator>
-typename iterator_traits<InputIterator>::difference_type _distance(InputIterator first,
-                                                                   InputIterator last,
-                                                                   input_iterator_tag) {
+typename iterator_traits<InputIterator>::difference_type _distance(
+    InputIterator first, InputIterator last, input_iterator_tag) {
     typename iterator_traits<InputIterator>::difference_type diff = 0;
     while (first != last) {
         ++first;
@@ -124,13 +133,14 @@ typename iterator_traits<InputIterator>::difference_type _distance(InputIterator
 
 template <typename RandomAccessIterator>
 typename iterator_traits<RandomAccessIterator>::difference_type _distance(
-    RandomAccessIterator first, RandomAccessIterator last, random_access_iterator_tag) {
+    RandomAccessIterator first, RandomAccessIterator last,
+    random_access_iterator_tag) {
     return last - first;
 }
 
 template <typename InputIterator>
-typename iterator_traits<InputIterator>::difference_type distance(InputIterator first,
-                                                                  InputIterator last) {
+typename iterator_traits<InputIterator>::difference_type distance(
+    InputIterator first, InputIterator last) {
     return _distance(first, last, iterator_category(first));
 }
 
@@ -144,7 +154,8 @@ void _advance(InputIterator& it, Distance n, input_iterator_tag) {
 }
 
 template <typename BidirectionalIterator, typename Distance>
-void _advance(BidirectionalIterator it, Distance n, bidirectional_iterator_tag) {
+void _advance(BidirectionalIterator it, Distance n,
+              bidirectional_iterator_tag) {
     if (n > 0) {
         while (n--) {
             ++it;
@@ -169,8 +180,9 @@ void advance(InputIterator& it, Distance n) {
 // next：当前迭代器的后 n 位，n 默认为 1
 
 template <typename InputIterator>
-inline InputIterator next(InputIterator it,
-                          typename iterator_traits<InputIterator>::difference_type n = 1) {
+inline InputIterator next(
+    InputIterator it,
+    typename iterator_traits<InputIterator>::difference_type n = 1) {
     advance(it, n);
     return it;
 }

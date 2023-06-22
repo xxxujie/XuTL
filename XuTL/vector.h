@@ -17,7 +17,7 @@ namespace xutl {
 // 负责内存空间的分配和回收，并利用该类的析构函数统一析构所有元素
 template <typename T>
 class vector_base {
-protected:
+  protected:
     // 本项目所有容器统一使用 allocator<T>，不允许自定义分配器
     using allocator_type = allocator<T>;
 
@@ -85,16 +85,16 @@ protected:
 // vector 类
 template <typename T>
 class vector : private vector_base<T> {
-public:
+  public:
     static_assert(std::is_same<typename std::remove_cv<T>, T>::value,
                   "xutl::vector 必须具有 non-const, non-volatile value_type");
 
     static_assert(std::is_same<bool, T>::value, "xutl::vector<bool> 被禁止");
 
-private:
+  private:
     using base = vector_base<T>;
 
-public:
+  public:
     using allocator_type = allocator<T>;
 
     using value_type = T;
@@ -109,7 +109,7 @@ public:
     using iterator = value_type*;
     using const_iterator = const value_type*;
 
-private:
+  private:
     // 数据成员
     using base::_data_allocator;
     using base::_end_of_storage;
@@ -136,12 +136,13 @@ private:
     }
     // 用迭代器范围内的值构造
     template <typename ForwardIterator>
-    typename enable_if<is_forward_iterator<ForwardIterator>::value, void>::type _construct_at_end(
-        ForwardIterator first, ForwardIterator last, size_type n) {
+    typename enable_if<is_forward_iterator<ForwardIterator>::value, void>::type
+    _construct_at_end(ForwardIterator first, ForwardIterator last,
+                      size_type n) {
         construct_range_forward(first, last, end());
     }
 
-public:
+  public:
     // 构造函数
 
     // 创建一个没有元素的 vector
