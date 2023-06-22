@@ -5,6 +5,8 @@
  * 该文件包含一个模板类 vector
  */
 
+#include <cstddef>
+
 #include "allocator.h"
 #include "debugdef.h"
 #include "iterator.h"
@@ -139,26 +141,38 @@ class vector : private vector_base<T> {
     typename enable_if<is_forward_iterator<ForwardIterator>::value, void>::type
     _construct_at_end(ForwardIterator first, ForwardIterator last,
                       size_type n) {
-        construct_range_forward(first, last, end());
+        _data_allocator.construct_range_forward(first, last, end());
     }
 
   public:
     // 构造函数
 
-    // 创建一个没有元素的 vector
+    // 构造一个没有元素的 vector
     inline vector() = default;
-    // 创建一个元素为默认构造的 vector.
+    // 构造一个元素为默认构造的 vector
     explicit vector(size_type n) {
         if (n > 0) {
             _allocate(n);
             _construct_at_end(n);
         }
     }
-    // 创建一个元素为 value 拷贝的 vector.
+    // 构造一个元素为 value 拷贝的 vector
     vector(size_type n, const_reference value) {
         if (n > 0) {
             _allocate(n);
             _construct_at_end(n, value);
+        }
+    }
+    // 用 [first, last) 内的元素构造 vector
+    template <typename InputIterator>
+    vector(
+        InputIterator first, InputIterator last,
+        typename enable_if<
+            xutl::is_input_iterator<InputIterator>::value>::type* = nullptr) {
+        size_type n = static_cast<size_type>(xutl::distance(first, last));
+        if (n > 0) {
+            _allocate(n);
+            _construct_at_end(first, last, n);
         }
     }
 
