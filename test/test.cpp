@@ -1,7 +1,7 @@
 #include <iostream>
 #include <string>
 
-#include "allocator.h"
+#include "memory.h"
 
 int main(int argc, char* argv[]) {
     // test codes;
