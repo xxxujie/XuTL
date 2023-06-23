@@ -1,6 +1,6 @@
 # XuTL
 
-本项目仅用于个人学习，采用 C++11 标准，参考自 [LLVM-libc++ 3.9.1](https://releases.llvm.org/3.9.1/libcxx-3.9.1.src.tar.xz) 的源码，实现了 STL 的一部分。有空就慢慢完善。
+本项目仅用于个人学习，采用 C++11 标准，主要参考自 [libc++ 3.9.1](https://releases.llvm.org/download.html) 的源码，实现了 STL 的一部分。有空就慢慢完善。
 
 ## 文件分布
 
