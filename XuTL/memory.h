@@ -58,7 +58,7 @@ inline typename Pointer::element_type* to_raw_pointer(Pointer ptr) noexcept {
 
 template <typename T>
 class allocator {
-  public:
+public:
     // allocator 的嵌套类型
 
     using value_type = T;
@@ -71,15 +71,15 @@ class allocator {
     using allocator_type = allocator<T>;
 
     // 构造函数
-    inline explicit allocator() noexcept = default;
+    explicit allocator() noexcept = default;
     // 拷贝构造函数
-    inline explicit allocator(const allocator&) noexcept = default;
+    explicit allocator(const allocator&) noexcept = default;
     // 泛化的拷贝构造函数
     template <typename U>
-    inline explicit allocator(const allocator<U>&) noexcept {
+    explicit allocator(const allocator<U>&) noexcept {
     }
     // 析构函数
-    inline ~allocator() = default;
+    ~allocator() = default;
 
     // 把 allocator<T> 转换到 allocator<U>
     template <typename U>

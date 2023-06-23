@@ -13,7 +13,7 @@ struct integral_constant {
     using value_type = T;
     using type = integral_constant;
     // 转型函数
-    inline constexpr operator value_type() const noexcept {
+    constexpr operator value_type() const noexcept {
         return value;
     }
 };
@@ -69,6 +69,48 @@ using std::remove_cv;
 
 // remove_reference
 using std::remove_reference;
+
+// is_integral
+
+template <class T>
+struct _is_integral : public false_type {};
+template <>
+struct _is_integral<bool> : public true_type {};
+template <>
+struct _is_integral<char> : public true_type {};
+template <>
+struct _is_integral<signed char> : public true_type {};
+template <>
+struct _is_integral<unsigned char> : public true_type {};
+template <>
+struct _is_integral<wchar_t> : public true_type {};
+template <>
+struct _is_integral<char16_t> : public true_type {};
+template <>
+struct _is_integral<char32_t> : public true_type {};
+template <>
+struct _is_integral<short> : public true_type {};
+template <>
+struct _is_integral<unsigned short> : public true_type {};
+template <>
+struct _is_integral<int> : public true_type {};
+template <>
+struct _is_integral<unsigned int> : public true_type {};
+template <>
+struct _is_integral<long> : public true_type {};
+template <>
+struct _is_integral<unsigned long> : public true_type {};
+template <>
+struct _is_integral<long long> : public true_type {};
+template <>
+struct _is_integral<unsigned long long> : public true_type {};
+template <>
+struct _is_integral<__int128_t> : public true_type {};
+template <>
+struct _is_integral<__uint128_t> : public true_type {};
+
+template <class T>
+struct is_integral : public _is_integral<typename remove_cv<T>::type> {};
 
 }  // namespace xutl
 

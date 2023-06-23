@@ -20,7 +20,7 @@ namespace xutl {
 // 负责内存空间的分配和回收，并利用该类的析构函数统一析构所有元素
 template <typename T>
 class vector_base {
-  protected:
+protected:
     // 本项目所有容器统一使用 allocator<T>，不允许自定义分配器
     using allocator_type = allocator<T>;
 
@@ -54,17 +54,17 @@ class vector_base {
     }
 
     // 清空元素，即析构所有元素
-    inline void _clear() noexcept {
+    void _clear() noexcept {
         _destroy_at_end(_start);
     }
 
     // 可用空间
-    inline size_type _capacity() const noexcept {
+    size_type _capacity() const noexcept {
         return static_cast<size_type>(_end_of_storage - _start);
     }
 
     // 从末尾开始析构，一直达到新末尾
-    inline void _destroy_at_end(pointer new_end) noexcept {
+    void _destroy_at_end(pointer new_end) noexcept {
         while (new_end != _finish) {
             _data_allocator.destroy(--_finish);
         }
@@ -89,16 +89,16 @@ class vector_base {
 // vector 类
 template <typename T>
 class vector : private vector_base<T> {
-  public:
+public:
     static_assert(std::is_same<typename std::remove_cv<T>, T>::value,
                   "xutl::vector 必须具有 non-const, non-volatile value_type");
 
     static_assert(std::is_same<bool, T>::value, "xutl::vector<bool> 被禁止");
 
-  private:
+private:
     using base = vector_base<T>;
 
-  public:
+public:
     using allocator_type = allocator<T>;
 
     using value_type = T;
@@ -113,46 +113,18 @@ class vector : private vector_base<T> {
     using iterator = value_type*;
     using const_iterator = const value_type*;
 
-  private:
+private:
     // 数据成员
     using base::_data_allocator;
     using base::_end_of_storage;
     using base::_finish;
     using base::_start;
 
-    // 分配和回收内存空间 allocate() 和 deallocate()
-    using base::_allocate;
-    using base::_deallocate;
-
-    // 构造和析构元素 construct_at_end() 和 destroy_at_end()
-
-    // 默认构造
-    void _construct_at_end(size_type n) {
-        while (--n) {
-            _data_allocator.construct(_finish++);
-        }
-    }
-    // 用 value 构造
-    void _construct_at_end(size_type n, const_reference value) {
-        while (--n) {
-            _data_allocator.construct(_finish++, value);
-        }
-    }
-    // 用迭代器范围内的值构造
-    template <typename ForwardIterator>
-    typename enable_if<is_forward_iterator<ForwardIterator>::value, void>::type
-    _construct_at_end(ForwardIterator first, ForwardIterator last,
-                      size_type n) {
-        _data_allocator.construct_range_forward(first, last, end());
-    }
-
-    using base::_destroy_at_end;
-
-  public:
+public:
     // 构造函数
 
     // 构造一个没有元素的 vector
-    inline vector() = default;
+    vector() noexcept = default;
     // 构造一个元素为默认构造的 vector
     explicit vector(size_type n) {
         if (n > 0) {
@@ -209,45 +181,36 @@ class vector : private vector_base<T> {
 
     ~vector() = default;
 
-    // operator=
-    inline vector& operator=(const vector& x);
-    inline vector& operator=(vector&& x) noexcept;
-
-    // 析构所有元素
-    inline void clear() noexcept {
-        base::_clear();
-    }
-
     // 迭代器相关
 
-    inline iterator begin() noexcept {
+    iterator begin() noexcept {
         return static_cast<iterator>(_start);
     }
-    inline iterator end() noexcept {
+    iterator end() noexcept {
         return static_cast<iterator>(_finish);
     }
-    inline const_iterator cbegin() const noexcept {
+    const_iterator cbegin() const noexcept {
         return static_cast<const_iterator>(_start);
     }
-    inline const_iterator cend() const noexcept {
+    const_iterator cend() const noexcept {
         return static_cast<const_iterator>(_finish);
     }
 
     // 容量相关
 
-    inline bool empty() const noexcept {
+    bool empty() const noexcept {
         return begin() == end();
     }
-    inline size_type size() const noexcept {
+    size_type size() const noexcept {
         return static_cast<size_type>(end() - begin());
     }
-
-    inline size_type capacity() const noexcept {
+    size_type capacity() const noexcept {
         return base::_capacity();
     }
 
     // 元素访问
 
+    // operator[]
     reference operator[](size_type n) {
         XUTL_DEBUG_ASSERT(n < size());
         return *(begin() + n);
@@ -257,8 +220,18 @@ class vector : private vector_base<T> {
         return *(begin() + n);
     }
 
-    // assign
+    // 容器修改
 
+    // 析构所有元素
+    void clear() noexcept {
+        base::_clear();
+    }
+
+    // operator=
+    vector& operator=(const vector& x);
+    vector& operator=(vector&& x) noexcept;
+
+    // assign
     template <typename InputIterator>
     typename enable_if<xutl::is_input_iterator<InputIterator>::value &&
                            !xutl::is_forward_iterator<InputIterator>::value,
@@ -271,22 +244,70 @@ class vector : private vector_base<T> {
     void assign(size_type n, const_reference value);
 
     // push_back
+    void push_back(const_reference x);
+    void push_back(value_type&& x);
 
-    inline void push_back(const_reference x);
-    inline void push_back(value_type&& x);
+    // emplace_back
+    template <typename... Args>
+    void emplace_back(Args&&... args);
 
     // pop_back
-    inline void pop_back();
+    void pop_back();
+
+    // swap
+    void swap(vector&) noexcept;
+
+private:
+    // 分配和回收内存空间 _allocate() 和 _deallocate()
+    using base::_allocate;
+    using base::_deallocate;
+
+    // 构造和析构元素 _construct_at_end() 和 _destroy_at_end()
+
+    // 默认构造
+    void _construct_at_end(size_type n) {
+        while (--n) {
+            _data_allocator.construct(_finish++);
+        }
+    }
+    // 用 value 构造
+    void _construct_at_end(size_type n, const_reference value) {
+        while (--n) {
+            _data_allocator.construct(_finish++, value);
+        }
+    }
+    // 用迭代器范围内的值构造
+    template <typename ForwardIterator>
+    typename enable_if<is_forward_iterator<ForwardIterator>::value, void>::type
+    _construct_at_end(ForwardIterator first, ForwardIterator last,
+                      size_type n) {
+        _data_allocator.construct_range_forward(first, last, end());
+    }
+
+    // _destroy_at_end()
+    using base::_destroy_at_end;
+
+    // 扩容时的建议容量
+    size_type _recommend_size(size_type new_size) const {
+        return xutl::max<size_type>(2 * capacity(), new_size);
+    }
 };
 
 template <typename T>
-inline vector<T>& vector<T>::operator=(const vector<T>& x) {
+vector<T>& vector<T>::operator=(const vector<T>& x) {
     if (this != &x) {
+        assign(x.begin(), x.end());
     }
+    return *this;
 }
 
 template <typename T>
-inline vector<T>& vector<T>::operator=(vector<T>&& x) noexcept {
+vector<T>& vector<T>::operator=(vector<T>&& x) noexcept {
+    _deallocate();
+    _start = x._start;
+    _finish = x._finish;
+    _end_of_storage = x._end_of_storage;
+    x._start = x._finish = x._end_of_storage = nullptr;
 }
 
 template <typename T>
@@ -325,7 +346,7 @@ vector<T>::assign(ForwardIterator first, ForwardIterator last) {
         }
     } else {
         _deallocate();
-        _allocate(new_size);
+        _allocate(_recommend_size(new_size));
         _construct_at_end(first, last, new_size);
     }
 }
@@ -334,7 +355,21 @@ template <typename T>
 void vector<T>::assign(size_type n, const_reference value) {
     if (n <= capacity()) {
         size_type old_size = size();
+        fill_n(_start, xutl::min(n, old_size), value);
+        if (n > old_size) {
+            _construct_at_end(n - old_size, value);
+        } else {
+            _destroy_at_end(begin() + n);
+        }
+    } else {
+        _deallocate();
+        _allocate(_recommend_size(n));
+        _construct_at_end(n, value);
     }
+}
+
+template <typename T>
+void vector<T>::push_back(const_reference x) {
 }
 
 }  // namespace xutl
