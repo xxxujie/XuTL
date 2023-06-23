@@ -7,9 +7,10 @@
 
 #include <cstddef>
 
-#include "allocator.h"
+#include "algorithm.h"
 #include "debugdef.h"
 #include "iterator.h"
+#include "memory.h"
 #include "type_traits.h"
 
 namespace xutl {
@@ -46,6 +47,7 @@ class vector_base {
     // 构造函数
 
     vector_base() noexcept = default;
+
     ~vector_base() {
         _clear();
         _data_allocator.deallocate(_start, _capacity());
@@ -144,6 +146,8 @@ class vector : private vector_base<T> {
         _data_allocator.construct_range_forward(first, last, end());
     }
 
+    using base::_destroy_at_end;
+
   public:
     // 构造函数
 
@@ -165,10 +169,21 @@ class vector : private vector_base<T> {
     }
     // 用 [first, last) 内的元素构造 vector
     template <typename InputIterator>
-    vector(
-        InputIterator first, InputIterator last,
-        typename enable_if<
-            xutl::is_input_iterator<InputIterator>::value>::type* = nullptr) {
+    vector(InputIterator first, InputIterator last,
+           typename enable_if<
+               xutl::is_input_iterator<InputIterator>::value &&
+               !xutl::is_forward_iterator<InputIterator>::value>::type* =
+               nullptr) {
+        while (first != last) {
+            push_back(*first);
+            ++first;
+        }
+    }
+    template <typename ForwardIterator>
+    vector(ForwardIterator first, ForwardIterator last,
+           typename enable_if<
+               xutl::is_forward_iterator<ForwardIterator>::value>::type* =
+               nullptr) {
         size_type n = static_cast<size_type>(xutl::distance(first, last));
         if (n > 0) {
             _allocate(n);
@@ -191,6 +206,12 @@ class vector : private vector_base<T> {
         _end_of_storage = x._end_of_storage;
         x._start = x._finish = x._end_of_storage = nullptr;
     }
+
+    ~vector() = default;
+
+    // operator=
+    inline vector& operator=(const vector& x);
+    inline vector& operator=(vector&& x) noexcept;
 
     // 析构所有元素
     inline void clear() noexcept {
@@ -235,7 +256,86 @@ class vector : private vector_base<T> {
         XUTL_DEBUG_ASSERT(n < size());
         return *(begin() + n);
     }
+
+    // assign
+
+    template <typename InputIterator>
+    typename enable_if<xutl::is_input_iterator<InputIterator>::value &&
+                           !xutl::is_forward_iterator<InputIterator>::value,
+                       void>::type
+    assign(InputIterator first, InputIterator last);
+    template <typename ForwardIterator>
+    typename enable_if<xutl::is_forward_iterator<ForwardIterator>::value,
+                       void>::type
+    assign(ForwardIterator first, ForwardIterator last);
+    void assign(size_type n, const_reference value);
+
+    // push_back
+
+    inline void push_back(const_reference x);
+    inline void push_back(value_type&& x);
+
+    // pop_back
+    inline void pop_back();
 };
+
+template <typename T>
+inline vector<T>& vector<T>::operator=(const vector<T>& x) {
+    if (this != &x) {
+    }
+}
+
+template <typename T>
+inline vector<T>& vector<T>::operator=(vector<T>&& x) noexcept {
+}
+
+template <typename T>
+template <typename InputIterator>
+typename enable_if<xutl::is_input_iterator<InputIterator>::value &&
+                       !xutl::is_forward_iterator<InputIterator>::value,
+                   void>::type
+vector<T>::assign(InputIterator first, InputIterator last) {
+    clear();
+    while (first != last) {
+        push_back(*first);
+        ++first;
+    }
+}
+
+template <typename T>
+template <typename ForwardIterator>
+typename enable_if<xutl::is_forward_iterator<ForwardIterator>::value,
+                   void>::type
+vector<T>::assign(ForwardIterator first, ForwardIterator last) {
+    size_type new_size = static_cast<size_type>(xutl::distance(first, last));
+    if (new_size <= capacity()) {
+        // if new_size <= size()
+        ForwardIterator mid = last;
+        bool is_growing = false;
+        if (new_size > size()) {
+            mid = first;
+            xutl::advance(mid, size());
+            is_growing = true;
+        }
+        pointer new_last = xutl::copy(first, mid, begin());
+        if (is_growing) {
+            _construct_at_end(mid, last, new_size - size());
+        } else {
+            _destroy_at_end(new_last);
+        }
+    } else {
+        _deallocate();
+        _allocate(new_size);
+        _construct_at_end(first, last, new_size);
+    }
+}
+
+template <typename T>
+void vector<T>::assign(size_type n, const_reference value) {
+    if (n <= capacity()) {
+        size_type old_size = size();
+    }
+}
 
 }  // namespace xutl
 

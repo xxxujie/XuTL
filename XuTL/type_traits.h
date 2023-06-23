@@ -31,17 +31,23 @@ struct enable_if<true, T> {
     using type = T;
 };
 
-// is_convertible
-using std::is_convertible;
-
 // is_same
 using std::is_same;
+
+// is_convertible
+using std::is_convertible;
 
 // is_trivially_move_constructibe
 using std::is_trivially_move_constructible;
 
 // is_lvalue_reference;
 using std::is_lvalue_reference;
+
+// is_trivially_assignable
+using std::is_trivially_assignable;
+
+// is_trivially_copy_assignable
+using std::is_trivially_copy_assignable;
 
 // declval
 // 只有声明，没有定义，不可 ODR-use，

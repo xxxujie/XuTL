@@ -1,13 +1,12 @@
-#ifndef XUTL_ALLOCATOR_H_
-#define XUTL_ALLOCATOR_H_
+#ifndef XUTL_MEMORY_H_
+#define XUTL_MEMORY_H_
 
 /**
- * 该文件包含一个模板类 allocator 作为默认分配器.
- * allocator<T>: 用于分配和释放内存，构造和析构对象.
- * 该默认分配器是无状态的.
+ * 该文件包含内存管理相关的一切
+ * 包括模板类 allocator 作为默认分配器
  */
 
-#include <string.h>
+#include <cstring>
 
 #include "construct.h"
 #include "type_traits.h"
@@ -181,4 +180,4 @@ inline bool operator!=(const allocator<T1>&, const allocator<T2>&) {
 
 }  // namespace xutl
 
-#endif  // XUTL_ALLOCATOR_H_
+#endif  // XUTL_MEMORY_H_
