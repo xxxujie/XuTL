@@ -8,7 +8,7 @@
 #include <cstddef>
 
 #include "algorithm.h"
-#include "debugdef.h"
+#include "exceptdef.h"
 #include "iterator.h"
 #include "memory.h"
 #include "type_traits.h"
@@ -207,6 +207,9 @@ public:
     size_type capacity() const noexcept {
         return base::_capacity();
     }
+    size_type max_size() const noexcept {
+        return static_cast<size_type>(-1) / sizeof(T);
+    }
 
     // 元素访问
 
@@ -289,6 +292,12 @@ private:
 
     // 扩容时的建议容量
     size_type _recommend_size(size_type new_size) const {
+        const size_type ms = max_size();
+        if (new_size > ms) {
+            THROW_LENGTH_ERROR("vector<T> is too large");
+        }
+        const size_type cap = capacity();
+        if (cap >= ms / 2) return ms;
         return xutl::max<size_type>(2 * capacity(), new_size);
     }
 };
