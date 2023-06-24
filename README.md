@@ -43,7 +43,7 @@ llvm（libc++ 3.9.1）中的实现就是 vector 继承于一个 vector_base，al
 
 至于为什么使用私有继承而不是组合，其实是偏好问题——**私有继承可以说是组合的另一种形式**。标准并未规定必须使用私有继承还是组合。
 
-本项目的 vector 继承于 vector_base，由于本项目的 allocator 是固定的，就是一个简单的无状态分配器，因此不考虑空类优化的问题。
+本项目的 vector 继承于 vector_base，由于本项目的 allocator 是固定的，就是一个简单的无状态分配器，因此不考虑空类优化的问题。另外，本项目不实现 `vector<bool>`。
 
 ### Algorithm 算法
 
