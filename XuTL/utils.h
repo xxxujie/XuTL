@@ -37,6 +37,16 @@ inline typename xutl::remove_reference<T>::type&& move(T&& t) noexcept {
     return static_cast<U&&>(t);
 }
 
+// ************************************************************************************
+// move
+// ************************************************************************************
+template <typename T>
+void swap(T& lhs, T& rhs) {
+    auto tmp = xutl::move(lhs);
+    lhs = xutl::move(rhs);
+    rhs = xutl::move(tmp);
+}
+
 }  // namespace xutl
 
 #endif  // XUTL_UTILS_H_

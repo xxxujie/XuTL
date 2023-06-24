@@ -41,15 +41,11 @@ struct allocator_has_construct
                                       true_type>::value> {};
 
 // to_raw_pointer
-// 转型为内置指针
+// 取得地址，即转型为内置指针
 
 template <typename T>
-inline T* to_raw_pointer(T* ptr) noexcept {
-    return ptr;
-}
-template <typename Pointer>
-inline typename Pointer::element_type* to_raw_pointer(Pointer ptr) noexcept {
-    return xutl::to_raw_pointer(ptr.operator->());
+inline T* address_of(T value) noexcept {
+    return &value;
 }
 
 // ************************************************************************************
@@ -138,7 +134,7 @@ public:
     void construct_range_forward(Iterator begin1, Iterator end1,
                                  Pointer begin2) {
         while (begin1 != end1) {
-            xutl::construct(to_raw_pointer(begin2), *begin1);
+            xutl::construct(address_of(*begin2), *begin1);
             ++begin1;
             ++begin2;
         }
