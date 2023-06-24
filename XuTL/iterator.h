@@ -45,14 +45,56 @@ struct iterator {
 // iterator traits
 // ************************************************************************************
 
+// 类型 T 是否具有内嵌类型 iterator_category
+template <typename T>
+class has_iterator_category {
+private:
+    struct two {
+        char a;
+        char b;
+    };
+    // 利用 SFINAE，只有类型具备内嵌类型 iterator_category
+    // 时，才会实例化第二个函数模板
+    template <typename U>
+    static two test(...);
+    template <typename U>
+    static char test(typename U::iterator_category* = nullptr);
+
+public:
+    // 具有内嵌类型 iterator_category 时，返回类型为 char，size 与 char
+    // 相等，value 为 true； 否则，返回类型为 two，size 与 char 不相等，value 为
+    // false
+    static const bool value = sizeof(test<T>(0)) == sizeof(char);
+};
+
+template <typename Iterator, bool>
+struct _iterator_traits_impl {};
+
 template <typename Iterator>
-struct iterator_traits {
+struct _iterator_traits_impl<Iterator, true> {
     using iterator_category = typename Iterator::iterator_category;
     using value_type = typename Iterator::value_type;
     using difference_type = typename Iterator::difference_type;
     using pointer = typename Iterator::pointer;
     using reference = typename Iterator::reference;
 };
+
+template <typename Iterator, bool>
+struct _iterator_traits {};
+
+template <typename Iterator>
+struct _iterator_traits<Iterator, true>
+    : public _iterator_traits_impl<
+          Iterator,
+          xutl::is_convertible<typename Iterator::iterator_category,
+                               input_iterator_tag>::value ||
+              xutl::is_convertible<typename Iterator::iterator_category,
+                                   output_iterator_tag>::value> {};
+
+template <typename Iterator>
+struct iterator_traits
+    : public _iterator_traits<Iterator,
+                              has_iterator_category<Iterator>::value> {};
 
 // 针对 pointer 的偏特化
 template <typename T>
@@ -74,12 +116,17 @@ struct iterator_traits<const T*> {
     using reference = const T&;
 };
 
-template <typename IteratorFrom, typename CategoryTo>
+template <typename IteratorFrom, typename CategoryTo,
+          bool = has_iterator_category<iterator_traits<IteratorFrom>>::value>
 struct has_iterator_category_convertible_to
     : public xutl::integral_constant<
           bool, xutl::is_convertible<
                     typename iterator_traits<IteratorFrom>::iterator_category,
                     CategoryTo>::value> {};
+
+template <typename IteratorFrom, typename CategoryTo>
+struct has_iterator_category_convertible_to<IteratorFrom, CategoryTo, false>
+    : public false_type {};
 
 // 判断迭代器类别
 

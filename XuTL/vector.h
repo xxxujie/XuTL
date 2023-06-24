@@ -353,7 +353,7 @@ private:
         _allocate(new_cap);
         try {
             _move_at_end(old_begin, pos);
-            _construct_at_end(static_cast<size_type>(1), value);
+            _construct_at_end(1, value);
             _move_at_end(pos, old_end);
             // _finish = xutl::uninitialized_move(old_begin, pos, _start);
             // _data_allocator::construct(xutl::address_of(*_finish), value);
