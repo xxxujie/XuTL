@@ -52,8 +52,7 @@ protected:
     vector_base() noexcept = default;
 
     ~vector_base() {
-        _clear();
-        _data_allocator::deallocate(_start, _capacity());
+        _deallocate();
     }
 
     // 清空元素，即析构所有元素
@@ -77,7 +76,7 @@ protected:
         _end_of_storage = _start + n;
     }
 
-    // 回收所有空间
+    // 清空并释放所有空间
     void _deallocate() noexcept {
         if (_start != nullptr) {
             _clear();
@@ -503,7 +502,8 @@ void vector<T>::emplace_back(Args&&... args) {
 template <typename T>
 void vector<T>::pop_back() {
     if (!empty()) {
-        _destroy_at_end(end() - 1);
+        _destroy_at_end(_finish - 1);
+        --_finish;
     }
 }
 

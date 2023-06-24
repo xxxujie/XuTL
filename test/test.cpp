@@ -14,11 +14,11 @@ int main(int argc, char* argv[]) {
     for (const auto& i : v) {
         std::cout << i << " ";
     }
-    // std::cout << std::endl;
-    // v.pop_back();
-    // for (const auto& i : v) {
-    //     std::cout << i << " ";
-    // }
-    // std::cout << std::endl;
+    std::cout << std::endl;
+    v.pop_back();
+    for (const auto& i : v) {
+        std::cout << i << " ";
+    }
+    std::cout << std::endl;
     return 0;
 }

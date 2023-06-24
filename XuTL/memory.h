@@ -113,11 +113,7 @@ public:
     }
     static void deallocate(T* ptr, size_type n) {
         if (ptr == nullptr) return;
-        while (n-- && ptr != nullptr) {
-            auto now = ptr;
-            ::operator delete(now);
-            ++ptr;
-        }
+        ::operator delete(ptr);
     }
 
     // 构造对象
