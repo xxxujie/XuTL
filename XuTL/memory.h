@@ -44,7 +44,7 @@ struct allocator_has_construct
 // 取得地址，即转型为内置指针
 
 template <typename T>
-inline T* address_of(T value) noexcept {
+inline T* address_of(T& value) noexcept {
     return &value;
 }
 
@@ -85,10 +85,10 @@ public:
 
     // 取址
 
-    pointer address(reference x) const {
+    static pointer address(reference x) {
         return &x;
     }
-    const_pointer address(const_reference x) const {
+    static const_pointer address(const_reference x) {
         return &x;
     }
 
@@ -96,43 +96,44 @@ public:
     // ::operator new 返回一个 void*, 利用 static_cast 将 void* 转换成 T*
 
     // 分配一个大小为 sizeof(T) 的空间
-    pointer allocate() {
+    static pointer allocate() {
         return static_cast<pointer>(::operator new(sizeof(value_type)));
     }
     // 分配 n 个大小为 sizeof(T) 的空间
-    pointer allocate(size_type n) {
+    static pointer allocate(size_type n) {
         if (n == 0) return nullptr;
         return static_cast<pointer>(::operator new(n * sizeof(value_type)));
     }
 
     // 释放空间
 
-    void deallocate(T* ptr) {
+    static void deallocate(T* ptr) {
         if (ptr == nullptr) return;
         ::operator delete(ptr);
     }
-    void deallocate(T* ptr, size_type n) {
+    static void deallocate(T* ptr, size_type n) {
         if (ptr == nullptr) return;
         while (n-- && ptr != nullptr) {
-            auto now = ptr++;
+            auto now = ptr;
             ::operator delete(now);
+            ++ptr;
         }
     }
 
     // 构造对象
 
-    void construct(T* ptr) {
+    static void construct(T* ptr) {
         xutl::construct(ptr);
     }
     template <typename... Args>
-    void construct(T* ptr, Args&&... args) {
+    static void construct(T* ptr, Args&&... args) {
         xutl::construct(ptr, xutl::forward<Args>(args)...);
     }
 
     // 用 [begin1, end1) 的元素构造以 begin2 为起点的空间
     template <typename Iterator, typename Pointer>
-    void construct_range_forward(Iterator begin1, Iterator end1,
-                                 Pointer begin2) {
+    static void construct_range_forward(Iterator begin1, Iterator end1,
+                                        Pointer begin2) {
         while (begin1 != end1) {
             xutl::construct(address_of(*begin2), *begin1);
             ++begin1;
@@ -141,9 +142,10 @@ public:
     }
     // 对于无构造函数类型的 SFINAE
     template <typename U>
-    typename enable_if<!allocator_has_construct<allocator_type, U*, U>::value &&
-                           xutl::is_trivially_move_constructible<U>::value,
-                       void>::type
+    static typename enable_if<
+        !allocator_has_construct<allocator_type, U*, U>::value &&
+            xutl::is_trivially_move_constructible<U>::value,
+        void>::type
     construct_range_forward(U* begin1, U* end1, U*& begin2) {
         using V = typename xutl::remove_cv<T>::type;
         difference_type n = end1 - begin1;
@@ -155,10 +157,10 @@ public:
 
     // 析构对象
 
-    void destroy(T* ptr) {
+    static void destroy(T* ptr) {
         xutl::destroy(ptr);
     }
-    void destroy(T* first, T* last) {
+    static void destroy(T* first, T* last) {
         xutl::destroy(first, last);
     }
 };

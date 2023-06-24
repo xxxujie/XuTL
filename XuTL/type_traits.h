@@ -7,19 +7,27 @@ namespace xutl {
 
 // helper class:
 
-template <typename T, T v>
-struct integral_constant {
-    static constexpr const T value = v;
-    using value_type = T;
-    using type = integral_constant;
-    // 转型函数
-    constexpr operator value_type() const noexcept {
-        return value;
-    }
-};
+// 标准库的谓词必须使用标准库的 true_type 和
+// false_type，未手动实现全部谓词前，不手动实现以下代码
 
-using true_type = integral_constant<bool, true>;
-using false_type = integral_constant<bool, false>;
+// template <typename T, T v>
+// struct integral_constant {
+//     static constexpr const T value = v;
+//     using value_type = T;
+//     using type = integral_constant;
+//     // 转型函数
+//     constexpr operator value_type() const noexcept {
+//         return value;
+//     }
+// };
+
+// using true_type = integral_constant<bool, true>;
+// using false_type = integral_constant<bool, false>;
+
+using std::integral_constant;
+
+using std::false_type;
+using std::true_type;
 
 // enable_if
 

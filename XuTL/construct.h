@@ -34,27 +34,13 @@ inline void construct(T* ptr, Args&&... args) {
 // 就什么都不用做
 
 // 版本 1
-template <typename T>
-inline void destroy(T* ptr) {
-    // 判断是否有 trivial destructor
-    _destroy_pointer(ptr, std::is_trivially_destructible<T>::type);
-}
 
-// 版本 2
-template <typename ForwardIterator>
-void destroy(ForwardIterator first, ForwardIterator last) {
-    _destroy_iterator(
-        first, last,
-        std::is_trivially_destructible<
-            typename iterator_traits<ForwardIterator>::value_type>::type);
-}
-
-// 版本 1, 对于 trivial destructor
+// 对于 trivial destructor
 template <typename T>
 inline void _destroy_pointer(T* ptr, std::true_type) {  // 什么都不做
 }
 
-// 版本 1, 对于 nontrivial destructor
+// 对于 nontrivial destructor
 template <typename T>
 inline void _destroy_pointer(T* ptr, std::false_type) {
     if (ptr != nullptr) {
@@ -62,13 +48,21 @@ inline void _destroy_pointer(T* ptr, std::false_type) {
     }
 }
 
-// 版本 2, 对于 trivial destructor
+template <typename T>
+inline void destroy(T* ptr) {
+    // 判断是否有 trivial destructor
+    _destroy_pointer(ptr, std::is_trivially_destructible<T>{});
+}
+
+// 版本 2
+
+// 对于 trivial destructor
 template <typename ForwardIterator>
 void _destroy_iterator(ForwardIterator first, ForwardIterator last,
                        std::true_type) {
 }
 
-// 版本 2, 对于 nontrivial destructor
+// 对于 nontrivial destructor
 template <typename ForwardIterator>
 void _destroy_iterator(ForwardIterator first, ForwardIterator last,
                        std::false_type) {
@@ -76,6 +70,14 @@ void _destroy_iterator(ForwardIterator first, ForwardIterator last,
         // auto current = &*first;
         destroy(&*first);
     }
+}
+
+template <typename ForwardIterator>
+void destroy(ForwardIterator first, ForwardIterator last) {
+    _destroy_iterator(
+        first, last,
+        std::is_trivially_destructible<
+            typename iterator_traits<ForwardIterator>::value_type>{});
 }
 
 }  // namespace xutl

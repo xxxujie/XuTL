@@ -69,6 +69,7 @@ OutputIterator _fill_forward_n(OutputIterator first, Size n, const T& value) {
         *first = value;
         ++first;
     }
+    return first;
 }
 
 template <typename T, typename Size, typename U>
@@ -144,7 +145,7 @@ _move_forward(T* first, T* last, U* result) {
 template <typename InputIterator, typename OutputIterator>
 OutputIterator move_forward(InputIterator first, InputIterator last,
                             OutputIterator result) {
-    xutl::_move_forward(first, last, result);
+    return xutl::_move_forward(first, last, result);
 }
 
 // ************************************************************************************

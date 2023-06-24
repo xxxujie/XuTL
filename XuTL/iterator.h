@@ -74,11 +74,10 @@ struct iterator_traits<const T*> {
     using reference = const T&;
 };
 
-// 仅供内部库使用的语法糖
 template <typename IteratorFrom, typename CategoryTo>
 struct has_iterator_category_convertible_to
     : public xutl::integral_constant<
-          bool, is_convertible<
+          bool, xutl::is_convertible<
                     typename iterator_traits<IteratorFrom>::iterator_category,
                     CategoryTo>::value> {};
 
@@ -143,7 +142,9 @@ typename iterator_traits<RandomAccessIterator>::difference_type _distance(
 template <typename InputIterator>
 typename iterator_traits<InputIterator>::difference_type distance(
     InputIterator first, InputIterator last) {
-    return _distance(first, last, iterator_category(first));
+    return _distance(
+        first, last,
+        typename iterator_traits<InputIterator>::iterator_category());
 }
 
 // advance：使迭代器前进 n 位

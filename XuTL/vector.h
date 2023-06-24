@@ -6,6 +6,7 @@
  */
 
 #include <cstddef>
+#include <cstdio>
 
 #include "algorithm.h"
 #include "exceptdef.h"
@@ -41,10 +42,10 @@ protected:
 
     // 数据成员
 
-    pointer _start = nullptr;                           // 已用空间的头
-    pointer _finish = nullptr;                          // 已用空间的尾
-    pointer _end_of_storage = nullptr;                  // 可用空间的尾
-    allocator_type _data_allocator = allocator_type();  // 分配器
+    pointer _start = nullptr;                // 已用空间的头
+    pointer _finish = nullptr;               // 已用空间的尾
+    pointer _end_of_storage = nullptr;       // 可用空间的尾
+    using _data_allocator = allocator_type;  // 分配器
 
     // 构造函数
 
@@ -52,7 +53,7 @@ protected:
 
     ~vector_base() {
         _clear();
-        _data_allocator.deallocate(_start, _capacity());
+        _data_allocator::deallocate(_start, _capacity());
     }
 
     // 清空元素，即析构所有元素
@@ -67,14 +68,12 @@ protected:
 
     // 从末尾开始析构，一直达到新末尾
     void _destroy_at_end(pointer new_end) noexcept {
-        while (new_end != _finish) {
-            _data_allocator.destroy(--_finish);
-        }
+        _data_allocator::destroy(new_end, _finish);
     }
 
     // 为 n 个对象分配空间
     void _allocate(size_type n) {
-        _finish = _start = _data_allocator.allocate(n);
+        _finish = _start = _data_allocator::allocate(n);
         _end_of_storage = _start + n;
     }
 
@@ -82,7 +81,7 @@ protected:
     void _deallocate() noexcept {
         if (_start != nullptr) {
             _clear();
-            _data_allocator.deallocate(_start, _capacity());
+            _data_allocator::deallocate(_start, _capacity());
             _start = _finish = _end_of_storage = nullptr;
         }
     }
@@ -92,10 +91,10 @@ protected:
 template <typename T>
 class vector : private vector_base<T> {
 public:
-    static_assert(std::is_same<typename std::remove_cv<T>, T>::value,
+    static_assert(!std::is_same<typename std::remove_cv<T>, T>::value,
                   "xutl::vector 必须具有 non-const, non-volatile value_type");
 
-    static_assert(std::is_same<bool, T>::value, "xutl::vector<bool> 被禁止");
+    static_assert(!std::is_same<bool, T>::value, "xutl::vector<bool> 被禁止");
 
 private:
     using base = vector_base<T>;
@@ -116,7 +115,7 @@ public:
     using const_iterator = const value_type*;
 
 private:  // 数据成员
-    using base::_data_allocator;
+    using _data_allocator = typename base::_data_allocator;
     using base::_end_of_storage;
     using base::_finish;
     using base::_start;
@@ -127,7 +126,13 @@ public:
     // ********************************************************************************
 
     // 构造一个没有元素的 vector
-    vector() noexcept = default;
+    vector() noexcept {
+        try {
+            _allocate(static_cast<size_type>(16));
+        } catch (...) {
+            _start = _finish = _end_of_storage = nullptr;
+        }
+    }
     // 构造一个元素为默认构造的 vector
     explicit vector(size_type n) {
         if (n > 0) {
@@ -180,7 +185,13 @@ public:
     iterator begin() noexcept {
         return static_cast<iterator>(_start);
     }
+    const_iterator begin() const noexcept {
+        return static_cast<iterator>(_start);
+    }
     iterator end() noexcept {
+        return static_cast<iterator>(_finish);
+    }
+    const_iterator end() const noexcept {
         return static_cast<iterator>(_finish);
     }
     const_iterator cbegin() const noexcept {
@@ -331,27 +342,31 @@ private:
             _deallocate();
             throw;
         }
-        _data_allocator.destroy(old_begin, old_end);
-        _data_allocator.deallocate(old_begin, old_size);
+        _data_allocator::destroy(old_begin, old_end);
+        _data_allocator::deallocate(old_begin, old_size);
     }
 
     // 重新分配空间（保留原来的元素），并在 pos 处插入元素
     void _reallocate_and_insert(iterator pos, const_reference value) {
         const size_type new_cap = _recommend_capacity(capacity() + 1);
-        auto old_begin = begin();
-        auto old_end = end();
-        auto old_size = size();
+        iterator old_begin = begin();
+        iterator old_end = end();
+        size_type old_size = size();
         _allocate(new_cap);
         try {
             _move_at_end(old_begin, pos);
-            _construct_at_end(1, value);
+            _construct_at_end(static_cast<size_type>(1), value);
             _move_at_end(pos, old_end);
+            // _finish = xutl::uninitialized_move(old_begin, pos, _start);
+            // _data_allocator::construct(xutl::address_of(*_finish), value);
+            // ++_finish;
+            // _finish = xutl::uninitialized_move(pos, old_end, _finish);
         } catch (...) {
             _deallocate();
             throw;
         }
-        _data_allocator.destroy(old_begin, old_end);
-        _data_allocator.deallocate(old_begin, old_size);
+        _data_allocator::destroy(old_begin, old_end);
+        _data_allocator::deallocate(old_begin, old_size);
     }
 
     // 重新分配空间（保留原来的元素），并在 pos 处就地构造元素
@@ -364,16 +379,16 @@ private:
         _allocate(new_cap);
         try {
             _move_at_end(old_begin, pos);
-            _data_allocator.construct(xutl::address_of(*_finish),
-                                      xutl::forward<Args>(args)...);
+            _data_allocator::construct(xutl::address_of(*_finish),
+                                       xutl::forward<Args>(args)...);
             ++_finish;
             _move_at_end(pos, old_end);
         } catch (...) {
             _deallocate();
             throw;
         }
-        _data_allocator.destroy(old_begin, old_end);
-        _data_allocator.deallocate(old_begin, old_size);
+        _data_allocator::destroy(old_begin, old_end);
+        _data_allocator::deallocate(old_begin, old_size);
     }
 };
 
@@ -456,7 +471,7 @@ void vector<T>::assign(size_type n, const_reference value) {
 template <typename T>
 void vector<T>::push_back(const_reference value) {
     if (_finish != _end_of_storage) {
-        _data_allocator.construct(address_of(*_finish), value);
+        _data_allocator::construct(address_of(*_finish), value);
         ++_finish;
     } else {
         _reallocate_and_insert(_finish, value);
@@ -465,19 +480,24 @@ void vector<T>::push_back(const_reference value) {
 
 template <typename T>
 void vector<T>::push_back(value_type&& value) {
+    printf("Into push_back()\n");
     emplace_back(xutl::move(value));
+    printf("Out push_back()\n");
 }
 
 template <typename T>
 template <typename... Args>
 void vector<T>::emplace_back(Args&&... args) {
+    printf("Into emplace_back()\n");
     if (_finish != _end_of_storage) {
-        _data_allocator.construct(address_of(*_finish),
-                                  xutl::forward<Args>(args)...);
+        printf("Ready to construct\n");
+        _data_allocator::construct(address_of(*_finish),
+                                   xutl::forward<Args>(args)...);
         ++_finish;
     } else {
         _reallocate_and_emplace(_finish, xutl::forward<Args>(args)...);
     }
+    printf("Out emplace_back()\n");
 }
 
 template <typename T>

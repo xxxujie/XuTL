@@ -65,6 +65,14 @@ llvm（libc++ 3.9.1）中的实现就是 vector 继承于一个 vector_base，al
 
 其余暂时直接采用标准库（`using std::xxx`）。
 
+### 相关标准库函数
+
+实现的有：
+
+1. `move`
+2. `forward`
+3. `swap`
+
 ## 参考资料
 
 1. LLVM. [*libc++ 3.9.1*](https://releases.llvm.org/download.html).
