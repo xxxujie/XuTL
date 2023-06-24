@@ -6,7 +6,6 @@
  */
 
 #include <cstddef>
-#include <cstdio>
 
 #include "algorithm.h"
 #include "exceptdef.h"
@@ -479,24 +478,19 @@ void vector<T>::push_back(const_reference value) {
 
 template <typename T>
 void vector<T>::push_back(value_type&& value) {
-    printf("Into push_back()\n");
     emplace_back(xutl::move(value));
-    printf("Out push_back()\n");
 }
 
 template <typename T>
 template <typename... Args>
 void vector<T>::emplace_back(Args&&... args) {
-    printf("Into emplace_back()\n");
     if (_finish != _end_of_storage) {
-        printf("Ready to construct\n");
         _data_allocator::construct(address_of(*_finish),
                                    xutl::forward<Args>(args)...);
         ++_finish;
     } else {
         _reallocate_and_emplace(_finish, xutl::forward<Args>(args)...);
     }
-    printf("Out emplace_back()\n");
 }
 
 template <typename T>
