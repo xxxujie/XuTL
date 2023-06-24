@@ -113,15 +113,16 @@ public:
     using iterator = value_type*;
     using const_iterator = const value_type*;
 
-private:
-    // 数据成员
+private:  // 数据成员
     using base::_data_allocator;
     using base::_end_of_storage;
     using base::_finish;
     using base::_start;
 
 public:
-    // 构造函数
+    // ********************************************************************************
+    // 构造函数/析构函数
+    // ********************************************************************************
 
     // 构造一个没有元素的 vector
     vector() noexcept = default;
@@ -181,7 +182,9 @@ public:
 
     ~vector() = default;
 
+    // ********************************************************************************
     // 迭代器相关
+    // ********************************************************************************
 
     iterator begin() noexcept {
         return static_cast<iterator>(_start);
@@ -196,7 +199,9 @@ public:
         return static_cast<const_iterator>(_finish);
     }
 
+    // ********************************************************************************
     // 容量相关
+    // ********************************************************************************
 
     bool empty() const noexcept {
         return begin() == end();
@@ -211,7 +216,9 @@ public:
         return static_cast<size_type>(-1) / sizeof(T);
     }
 
+    // ********************************************************************************
     // 元素访问
+    // ********************************************************************************
 
     // operator[]
     reference operator[](size_type n) {
@@ -223,7 +230,9 @@ public:
         return *(begin() + n);
     }
 
+    // ********************************************************************************
     // 容器修改
+    // ********************************************************************************
 
     // 析构所有元素
     void clear() noexcept {
@@ -286,7 +295,6 @@ private:
                       size_type n) {
         _data_allocator.construct_range_forward(first, last, end());
     }
-
     // _destroy_at_end()
     using base::_destroy_at_end;
 

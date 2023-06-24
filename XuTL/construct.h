@@ -2,7 +2,7 @@
 #define XUTL_CONSTRUCT_H_
 
 /**
- * 该文件包含两个工具函数，给 allcator 使用，包括 construct 和 destroy
+ * 该文件包含两个辅助函数，给 allcator 使用，包括 construct 和 destroy
  */
 
 #include <new>
