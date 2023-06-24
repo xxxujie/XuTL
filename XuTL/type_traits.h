@@ -49,6 +49,9 @@ using std::is_trivially_assignable;
 // is_trivially_copy_assignable
 using std::is_trivially_copy_assignable;
 
+// is_trivially_move_assignable
+using std::is_trivially_move_assignable;
+
 // declval
 // 只有声明，没有定义，不可 ODR-use，
 // 只能用于 unevaluated context 的函数，

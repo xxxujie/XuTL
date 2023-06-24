@@ -355,7 +355,7 @@ vector<T>::assign(ForwardIterator first, ForwardIterator last) {
             xutl::advance(mid, size());
             is_growing = true;
         }
-        pointer new_last = xutl::copy(first, mid, begin());
+        pointer new_last = xutl::copy_forward(first, mid, begin());
         if (is_growing) {
             _construct_at_end(mid, last, new_size - size());
         } else {
@@ -372,7 +372,7 @@ template <typename T>
 void vector<T>::assign(size_type n, const_reference value) {
     if (n <= capacity()) {
         size_type old_size = size();
-        fill_n(_start, xutl::min(n, old_size), value);
+        fill_forward_n(_start, xutl::min(n, old_size), value);
         if (n > old_size) {
             _construct_at_end(n - old_size, value);
         } else {

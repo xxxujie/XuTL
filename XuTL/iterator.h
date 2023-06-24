@@ -82,6 +82,8 @@ struct has_iterator_category_convertible_to
                     typename iterator_traits<IteratorFrom>::iterator_category,
                     CategoryTo>::value> {};
 
+// 判断迭代器类别
+
 template <typename Iterator>
 struct is_input_iterator
     : public has_iterator_category_convertible_to<Iterator,
