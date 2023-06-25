@@ -40,14 +40,6 @@ struct allocator_has_construct
                                           declval<Args>()...)),
                                       true_type>::value> {};
 
-// to_raw_pointer
-// 取得地址，即转型为内置指针
-
-template <typename T>
-inline T* address_of(T& value) noexcept {
-    return &value;
-}
-
 // ************************************************************************************
 // allocator 类
 // ************************************************************************************

@@ -9,6 +9,7 @@
 #include <cstddef>
 
 #include "type_traits.h"
+#include "utils.h"
 
 namespace xutl {
 
@@ -21,25 +22,6 @@ struct output_iterator_tag {};
 struct forward_iterator_tag : public input_iterator_tag {};
 struct bidirectional_iterator_tag : public forward_iterator_tag {};
 struct random_access_iterator_tag : public bidirectional_iterator_tag {};
-
-// ************************************************************************************
-// iterator 基类
-// ************************************************************************************
-
-template <typename Category, typename T, typename Distance = std::ptrdiff_t,
-          typename Pointer = T*, typename Reference = T&>
-struct iterator {
-    // 五种迭代器类别标签之一
-    using iterator_category = Category;
-    // 迭代器所指类型
-    using value_type = T;
-    // 迭代器之间的距离以这种类型表示
-    using difference_type = Distance;
-    // 迭代器所指类型的指针
-    using pointer = Pointer;
-    // 迭代器所指类型的引用
-    using reference = Reference;
-};
 
 // ************************************************************************************
 // iterator traits
@@ -162,6 +144,25 @@ struct is_exactly_input_iterator
 };
 
 // ************************************************************************************
+// iterator 基类
+// ************************************************************************************
+
+template <typename Category, typename T, typename Distance = std::ptrdiff_t,
+          typename Pointer = T*, typename Reference = T&>
+struct iterator {
+    // 五种迭代器类别标签之一
+    using iterator_category = Category;
+    // 迭代器所指类型
+    using value_type = T;
+    // 迭代器之间的距离以这种类型表示
+    using difference_type = Distance;
+    // 迭代器所指类型的指针
+    using pointer = Pointer;
+    // 迭代器所指类型的引用
+    using reference = Reference;
+};
+
+// ************************************************************************************
 // 迭代器的 helper function
 // 标准规定，作为模板参数的迭代器，以算法所能接受的最低阶迭代器类别命名
 // ************************************************************************************
@@ -245,6 +246,139 @@ inline BidirectionalIterator prev(
     typename iterator_traits<BidirectionalIterator>::difference_type n = 1) {
     advance(it, -n);
     return it;
+}
+
+// ************************************************************************************
+// 迭代器适配器：reverse_interator
+// 它是一个反向迭代器，前进为后退，后退为前进
+// ************************************************************************************
+
+template <typename Iterator>
+class reverse_iterator
+    : public iterator<typename iterator_traits<Iterator>::iterator_category,
+                      typename iterator_traits<Iterator>::value_type> {
+public:
+    using difference_type = typename iterator_traits<Iterator>::difference_type;
+    using pointer = typename iterator_traits<Iterator>::pointer;
+    using reference = typename iterator_traits<Iterator>::reference;
+
+    using iterator_type = Iterator;
+
+protected:
+    // 对应的正向迭代器
+    Iterator current;
+
+public:
+    // 构造函数
+    reverse_iterator() = default;
+    explicit reverse_iterator(iterator_type i) : current(i) {
+    }
+    template <typename OtherIterator>
+    reverse_iterator(const reverse_iterator<OtherIterator>& rhs)
+        : current(rhs.base()) {
+    }
+
+    // 获取该适配器的基础迭代器
+    iterator_type base() const {
+        return current;
+    }
+
+    // 操作符重载
+
+    // reverse_iterator
+    // 的区间也是前闭后开，因此整体向前移动一位，指向正向迭代器的前一个位置
+    reference operator*() const {
+        iterator_type tmp = current;
+        return *(--tmp);
+    }
+    pointer operator->() const {
+        return xutl::address_of(operator*());
+    }
+    // 前置 ++
+    reverse_iterator& operator++() {
+        --current;
+        return *this;
+    }
+    // 后置 ++
+    reverse_iterator operator++(int) {
+        reverse_iterator tmp(*this);
+        --current;
+        return tmp;
+    }
+    reverse_iterator& operator--() {
+        ++current;
+        return *this;
+    }
+    reverse_iterator& operator--(int) {
+        reverse_iterator tmp(*this);
+        ++current;
+        return *this;
+    }
+    reverse_iterator operator+(difference_type n) const {
+        return reverse_iterator(current - n);
+    }
+    reverse_iterator operator-(difference_type n) const {
+        return reverse_iterator(current + n);
+    }
+    reverse_iterator& operator+=(difference_type n) {
+        current -= n;
+        return *this;
+    }
+    reverse_iterator& operator-=(difference_type n) {
+        current += n;
+        return *this;
+    }
+    reference operator[](difference_type n) const {
+        return *(*this + n);
+    }
+};
+
+template <typename Iterator1, typename Iterator2>
+bool operator==(const reverse_iterator<Iterator1>& lhs,
+                const reverse_iterator<Iterator2>& rhs) {
+    return lhs.base() == rhs.base();
+}
+template <typename Iterator1, typename Iterator2>
+bool operator!=(const reverse_iterator<Iterator1>& lhs,
+                const reverse_iterator<Iterator2>& rhs) {
+    return lhs.base() != rhs.base();
+}
+template <typename Iterator1, typename Iterator2>
+bool operator<(const reverse_iterator<Iterator1>& lhs,
+               const reverse_iterator<Iterator2>& rhs) {
+    return lhs.base() > rhs.base();
+}
+template <typename Iterator1, typename Iterator2>
+bool operator>(const reverse_iterator<Iterator1>& lhs,
+               const reverse_iterator<Iterator2>& rhs) {
+    return lhs.base() < rhs.base();
+}
+template <typename Iterator1, typename Iterator2>
+bool operator<=(const reverse_iterator<Iterator1>& lhs,
+                const reverse_iterator<Iterator2>& rhs) {
+    return lhs.base() >= rhs.base();
+}
+template <typename Iterator1, typename Iterator2>
+bool operator>=(const reverse_iterator<Iterator1>& lhs,
+                const reverse_iterator<Iterator2>& rhs) {
+    return lhs.base() <= rhs.base();
+}
+template <typename Iterator1, typename Iterator2>
+auto operator-(const reverse_iterator<Iterator1>& lhs,
+               const reverse_iterator<Iterator2>& rhs)
+    -> decltype(rhs.base() - lhs.base()) {
+    return rhs.base() - lhs.base();
+}
+template <typename Iterator>
+reverse_iterator<Iterator> operator+(
+    typename reverse_iterator<Iterator>::difference_type n,
+    const reverse_iterator<Iterator>& iter) {
+    return reverse_iterator<Iterator>(iter.base() - n);
+}
+
+template <typename Iterator>
+inline reverse_iterator<Iterator> make_reverse_iterator(Iterator iter) {
+    return reverse_iterator<Iterator>(iter);
 }
 
 }  // namespace xutl

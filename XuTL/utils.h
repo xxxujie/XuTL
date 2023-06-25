@@ -47,6 +47,15 @@ void swap(T& lhs, T& rhs) {
     rhs = xutl::move(tmp);
 }
 
+// ************************************************************************************
+// address_of
+// 取得地址，即转型为内置指针
+// ************************************************************************************
+
+template <typename T>
+inline T* address_of(T& value) noexcept {
+    return &value;
+}
 }  // namespace xutl
 
 #endif  // XUTL_UTILS_H_
