@@ -6,6 +6,7 @@
  */
 
 #include <cstddef>
+#include <initializer_list>
 
 #include "algorithm.h"
 #include "exceptdef.h"
@@ -173,6 +174,13 @@ public:
         _end_of_storage = x._end_of_storage;
         x._start = x._finish = x._end_of_storage = nullptr;
     }
+    vector(std::initializer_list<value_type> list) {
+        size_type n = static_cast<size_type>(list.size());
+        if (n > 0) {
+            _allocate(n);
+            _construct_at_end(list.begin(), list.end());
+        }
+    }
 
     ~vector() = default;
 
@@ -254,6 +262,7 @@ public:
                        void>::type
     assign(ForwardIterator first, ForwardIterator last);
     void assign(size_type n, const_reference value);
+    void assign(std::initializer_list<value_type> list);
 
     // push_back
     void push_back(const_reference value);
@@ -464,6 +473,11 @@ void vector<T>::assign(size_type n, const_reference value) {
         _allocate(_recommend_capacity(n));
         _construct_at_end(n, value);
     }
+}
+
+template <typename T>
+void vector<T>::assign(std::initializer_list<value_type> list) {
+    assign(list.begin(), list.end());
 }
 
 template <typename T>
