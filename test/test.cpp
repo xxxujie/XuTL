@@ -10,7 +10,6 @@ int main(int argc, char* argv[]) {
     v.push_back(i);
     v.push_back(3);
     v.emplace_back(4);
-    /* bug when done push_back(T&&)*/
     for (const auto& i : v) {
         std::cout << i << " ";
     }
@@ -21,5 +20,13 @@ int main(int argc, char* argv[]) {
     }
     std::cout << std::endl;
     v.assign(5, 1);
+    for (const auto& i : v) {
+        std::cout << i << " ";
+    }
+    std::cout << std::endl;
+    v.reserve(100);
+    std::cout << v.capacity() << std::endl;
+    v.shrink_to_fit();
+    std::cout << v.capacity() << std::endl;
     return 0;
 }

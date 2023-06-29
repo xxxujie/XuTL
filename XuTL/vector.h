@@ -112,6 +112,8 @@ public:
     // 迭代器
     using iterator = value_type*;
     using const_iterator = const value_type*;
+    using reverse_iterator = xutl::reverse_iterator<iterator>;
+    using const_reverse_iterator = xutl::reverse_iterator<const_iterator>;
 
 private:  // 数据成员
     using _data_allocator = typename base::_data_allocator;
@@ -189,22 +191,40 @@ public:
     // ********************************************************************************
 
     iterator begin() noexcept {
-        return static_cast<iterator>(_start);
+        return iterator(_start);
     }
     const_iterator begin() const noexcept {
-        return static_cast<iterator>(_start);
+        return const_iterator(_start);
     }
     iterator end() noexcept {
-        return static_cast<iterator>(_finish);
+        return iterator(_finish);
     }
     const_iterator end() const noexcept {
-        return static_cast<iterator>(_finish);
+        return const_iterator(_finish);
+    }
+    reverse_iterator rbegin() noexcept {
+        return reverse_iterator(end());
+    }
+    const_reverse_iterator rbegin() const noexcept {
+        return const_reverse_iterator(end());
+    }
+    reverse_iterator rend() noexcept {
+        return reverse_iterator(begin());
+    }
+    const_reverse_iterator rend() const noexcept {
+        return const_reverse_iterator(begin());
     }
     const_iterator cbegin() const noexcept {
-        return static_cast<const_iterator>(_start);
+        return begin();
     }
     const_iterator cend() const noexcept {
-        return static_cast<const_iterator>(_finish);
+        return end();
+    }
+    const_reverse_iterator crbegin() const noexcept {
+        return rbegin();
+    }
+    const_reverse_iterator crend() const noexcept {
+        return rend();
     }
 
     // ********************************************************************************
@@ -224,17 +244,42 @@ public:
         return static_cast<size_type>(-1) / sizeof(T);
     }
 
+    void reserve(size_type n) {
+        if (n > capacity()) {
+            _reallocate(n, false);
+        }
+    }
+
+    // 丢弃多余的容量
+    void shrink_to_fit() {
+        if (_finish < _end_of_storage) {
+            _reallocate(size(), false);
+        }
+    }
+
     // ********************************************************************************
     // 元素访问
     // ********************************************************************************
 
     // operator[]
     reference operator[](size_type n) {
-        XUTL_DEBUG_ASSERT(n < size());
         return *(begin() + n);
     }
-    reference operator[](size_type n) const {
-        XUTL_DEBUG_ASSERT(n < size());
+    const_reference operator[](size_type n) const {
+        return *(begin() + n);
+    }
+
+    // at
+    reference at(size_type n) {
+        if (n >= size()) {
+            THROW_OUT_OF_RANGE("vector");
+        }
+        return *(begin() + n);
+    }
+    const_reference at(size_type n) const {
+        if (n >= size()) {
+            THROW_OUT_OF_RANGE("vector");
+        }
         return *(begin() + n);
     }
 
@@ -337,8 +382,11 @@ private:
     }
 
     // 重新分配空间（保留原来的元素）
-    void _reallocate(size_type new_capacity) {
-        const size_type new_cap = _recommend_capacity(new_capacity);
+    void _reallocate(size_type new_capacity, bool recommending = true) {
+        size_type new_cap = new_capacity;
+        if (recommending) {
+            new_cap = _recommend_capacity(new_capacity);
+        }
         auto old_begin = begin();
         auto old_end = end();
         auto old_size = size();
@@ -347,6 +395,8 @@ private:
             _move_at_end(old_begin, old_end);
         } catch (...) {
             _deallocate();
+            _start = old_begin;
+            _finish = old_end;
             throw;
         }
         _data_allocator::destroy(old_begin, old_end);
@@ -364,12 +414,10 @@ private:
             _move_at_end(old_begin, pos);
             _construct_at_end(1, value);
             _move_at_end(pos, old_end);
-            // _finish = xutl::uninitialized_move(old_begin, pos, _start);
-            // _data_allocator::construct(xutl::address_of(*_finish), value);
-            // ++_finish;
-            // _finish = xutl::uninitialized_move(pos, old_end, _finish);
         } catch (...) {
             _deallocate();
+            _start = old_begin;
+            _finish = old_end;
             throw;
         }
         _data_allocator::destroy(old_begin, old_end);
@@ -392,6 +440,8 @@ private:
             _move_at_end(pos, old_end);
         } catch (...) {
             _deallocate();
+            _start = old_begin;
+            _finish = old_end;
             throw;
         }
         _data_allocator::destroy(old_begin, old_end);
