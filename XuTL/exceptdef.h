@@ -10,6 +10,8 @@
 
 namespace xutl {
 
+#define XUTL_ASSERT(expr) assert(expr)
+
 #define THROW_LENGTH_ERROR(what) throw std::length_error(what)
 #define THROW_OUT_OF_RANGE(what) throw std::out_of_range(what)
 

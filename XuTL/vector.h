@@ -283,6 +283,26 @@ public:
         return *(begin() + n);
     }
 
+    reference front() {
+        return *begin();
+    }
+    const_reference front() const {
+        return *begin();
+    }
+    reference back() {
+        return *end();
+    }
+    const_reference back() const {
+        return *end();
+    }
+
+    pointer data() noexcept {
+        return begin();
+    }
+    const_pointer data() const noexcept {
+        return begin();
+    }
+
     // ********************************************************************************
     // 容器修改
     // ********************************************************************************
@@ -295,6 +315,10 @@ public:
     // operator=
     vector& operator=(const vector& x);
     vector& operator=(vector&& x) noexcept;
+    vector& operator=(std::initializer_list<value_type> list) {
+        assign(list.begin(), list.end());
+        return *this;
+    }
 
     // assign
     template <typename InputIterator>
@@ -314,12 +338,50 @@ public:
     void push_back(value_type&& value);
 
     // emplace_back
-    // 在尾部就地构造圆度，以避免额外的复制或移动开销
+    // 在尾部就地构造元素，以避免额外的复制或移动开销
     template <typename... Args>
     void emplace_back(Args&&... args);
 
     // pop_back
     void pop_back();
+
+    // emplace
+    // 在 pos 处就地构造元素
+    template <typename... Args>
+    iterator emplace(const_iterator position, Args&&... args);
+
+    // insert
+    iterator insert(const_iterator position, const_reference value);
+    iterator insert(const_iterator position, value_type&& value) {
+        return emplace(position, xutl::move(value));
+    }
+    iterator insert(const_iterator position, size_type n,
+                    const_reference value);
+
+    template <typename InputIterator>
+    typename enable_if<
+        xutl::is_input_iterator<InputIterator>::value &&
+            !xutl::is_forward_iterator<InputIterator>::value &&
+            xutl::is_constructible<
+                value_type,
+                typename iterator_traits<InputIterator>::reference>::value,
+        iterator>::type
+    insert(const_iterator position, InputIterator first, InputIterator last);
+
+    template <typename ForwardIterator>
+    typename enable_if<
+        xutl::is_forward_iterator<ForwardIterator>::value &&
+            xutl::is_constructible<
+                value_type,
+                typename iterator_traits<ForwardIterator>::reference>::value,
+        iterator>::type
+    insert(const_iterator position, ForwardIterator first,
+           ForwardIterator last);
+
+    iterator insert(const_iterator position,
+                    std::initializer_list<value_type> list) {
+        return insert(position, list.begin(), list.end());
+    }
 
     // swap
     void swap(vector&) noexcept;
@@ -495,7 +557,7 @@ vector<T>::assign(ForwardIterator first, ForwardIterator last) {
             xutl::advance(mid, size());
             is_growing = true;
         }
-        pointer new_last = xutl::copy_forward(first, mid, begin());
+        pointer new_last = xutl::copy(first, mid, begin());
         if (is_growing) {
             _construct_at_end(mid, last);
         } else {
@@ -512,7 +574,7 @@ template <typename T>
 void vector<T>::assign(size_type n, const_reference value) {
     if (n <= capacity()) {
         size_type old_size = size();
-        fill_forward_n(_start, xutl::min(n, old_size), value);
+        fill_n(_start, xutl::min(n, old_size), value);
         if (n > old_size) {
             _construct_at_end(n - old_size, value);
         } else {
@@ -563,6 +625,56 @@ void vector<T>::pop_back() {
         _destroy_at_end(_finish - 1);
         --_finish;
     }
+}
+
+template <typename T>
+template <typename... Args>
+typename vector<T>::iterator vector<T>::emplace(const_iterator position,
+                                                Args&&... args) {
+    iterator pos = const_cast<iterator>(position);
+    const size_type n = pos - _start;
+    if (_finish != _end_of_storage) {
+        if (pos == _finish) {
+            _data_allocator::construct(xutl::address_of(*_finish),
+                                       xutl::forward<Args>(args)...);
+            ++_finish;
+        } else {
+            auto old_finish = _finish;
+            _data_allocator::construct(xutl::address_of(*_finish),
+                                       *(_finish - 1));
+            ++_finish;
+            xutl::move_backward(pos, old_finish - 1, old_finish);
+            *pos = value_type(xutl::forward<Args>(args)...);
+        }
+    } else {
+        _reallocate_and_emplace(pos, xutl::forward<Args>(args)...);
+    }
+    return _start + n;
+}
+
+template <typename T>
+typename vector<T>::iterator vector<T>::insert(const_iterator position,
+                                               const_reference value) {
+    iterator pos = const_cast<pointer>(position);
+    const size_type n = pos - _start;
+    if (_finish != _end_of_storage) {
+        if (pos == _finish) {
+            _data_allocator::construct(xutl::address_of(*_finish), value);
+            ++_finish;
+        } else {
+            auto old_finish = _finish;
+            _data_allocator::construct(xutl::address_of(*_finish),
+                                       *(_finish - 1));
+            ++_finish;
+            // 如果 value 是内部元素之一，可能被改变，所以先拷贝
+            auto value_copy = value;
+            xutl::move_backward(pos, old_finish - 1, old_finish);
+            *pos = xutl::move(value_copy);
+        }
+    } else {
+        _reallocate_and_insert(pos, value);
+    }
+    return _start + n;
 }
 
 template <typename T>

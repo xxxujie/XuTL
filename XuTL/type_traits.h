@@ -8,7 +8,7 @@ namespace xutl {
 // helper class:
 
 // 标准库的谓词必须使用标准库的 true_type 和
-// false_type，未手动实现全部谓词前，不手动实现以下代码
+// false_type，未手动实现全部谓词前，不使用以下自己实现的代码
 
 // template <typename T, T v>
 // struct integral_constant {
@@ -59,6 +59,8 @@ using std::is_trivially_copy_assignable;
 
 // is_trivially_move_assignable
 using std::is_trivially_move_assignable;
+
+using std::is_constructible;
 
 // declval
 // 只有声明，没有定义，不可 ODR-use，

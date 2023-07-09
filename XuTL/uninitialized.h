@@ -19,7 +19,7 @@ namespace xutl {
 template <typename InputIterator, typename ForwardIterator>
 ForwardIterator _uninitialized_copy(InputIterator first, InputIterator last,
                                     ForwardIterator result, xutl::true_type) {
-    return xutl::copy_forward(first, last, result);
+    return xutl::copy(first, last, result);
 }
 
 template <typename InputIterator, typename ForwardIterator>
@@ -58,7 +58,7 @@ ForwardIterator uninitialized_copy(InputIterator first, InputIterator last,
 template <typename InputIterator, typename Size, typename ForwardIterator>
 ForwardIterator _uninitialized_copy_n(InputIterator first, Size n,
                                       ForwardIterator result, xutl::true_type) {
-    return xutl::copy_forward_n(first, n, result);
+    return xutl::copy_n(first, n, result);
 }
 
 template <typename InputIterator, typename Size, typename ForwardIterator>
@@ -95,7 +95,7 @@ ForwardIterator uninitialized_copy_n(InputIterator first, Size n,
 template <typename ForwardIterator, typename T>
 void _uninitialized_fill(ForwardIterator first, ForwardIterator last,
                          const T& value, xutl::true_type) {
-    xutl::fill_forward(first, last, value);
+    xutl::fill(first, last, value);
 }
 
 template <typename ForwardIterator, typename T>
@@ -129,7 +129,7 @@ void uninitialized_fill(ForwardIterator first, ForwardIterator last,
 template <typename ForwardIterator, typename Size, typename T>
 ForwardIterator _uninitialized_fill_n(ForwardIterator first, Size n,
                                       const T& value, xutl::true_type) {
-    return fill_forward_n(first, n, value);
+    return fill_n(first, n, value);
 }
 
 template <typename ForwardIterator, typename Size, typename T>
@@ -164,7 +164,7 @@ ForwardIterator uninitialized_fill_n(ForwardIterator first, Size n,
 template <typename InputIterator, typename ForwardIterator>
 ForwardIterator _uninitialized_move(InputIterator first, InputIterator last,
                                     ForwardIterator result, xutl::true_type) {
-    return xutl::move_forward(first, last, result);
+    return xutl::move(first, last, result);
 }
 
 template <typename InputIterator, typename ForwardIterator>
