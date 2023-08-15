@@ -509,6 +509,28 @@ private:
         _data_allocator::destroy(old_begin, old_end);
         _data_allocator::deallocate(old_begin, old_size);
     }
+
+    // 重新分配空间（保留原来的元素），并从 pos 处开始插入 n 个元素
+    void _reallocate_and_fill_n(iterator pos, size_type n,
+                                const_reference value) {
+        const size_type new_cap = _recommend_capacity(capacity() + n);
+        auto old_begin = begin();
+        auto old_end = end();
+        auto old_size = size();
+        _allocate(new_cap);
+        try {
+            _move_at_end(old_begin, pos);
+            xutl::fill_n(_finish, n, value);
+            _move_at_end(pos, old_end);
+        } catch (...) {
+            _deallocate();
+            _start = old_begin;
+            _finish = old_end;
+            throw;
+        }
+        _data_allocator::destroy(old_begin, old_end);
+        _data_allocator::deallocate(old_begin, old_size);
+    }
 };
 
 template <typename T>
@@ -655,7 +677,9 @@ typename vector<T>::iterator vector<T>::emplace(const_iterator position,
 template <typename T>
 typename vector<T>::iterator vector<T>::insert(const_iterator position,
                                                const_reference value) {
-    iterator pos = const_cast<pointer>(position);
+    // 去除 const
+    // iterator pos = const_cast<iterator>(position);
+    iterator pos = _start + (position - begin());
     const size_type n = pos - _start;
     if (_finish != _end_of_storage) {
         if (pos == _finish) {
@@ -666,13 +690,42 @@ typename vector<T>::iterator vector<T>::insert(const_iterator position,
             _data_allocator::construct(xutl::address_of(*_finish),
                                        *(_finish - 1));
             ++_finish;
-            // 如果 value 是内部元素之一，可能被改变，所以先拷贝
+            // value 是引用，如果它是内部元素之一，那么它可能被改变，因此先拷贝
             auto value_copy = value;
             xutl::move_backward(pos, old_finish - 1, old_finish);
             *pos = xutl::move(value_copy);
         }
     } else {
         _reallocate_and_insert(pos, value);
+    }
+    return _start + n;
+}
+
+template <typename T>
+typename vector<T>::iterator vector<T>::insert(const_iterator position,
+                                               size_type n,
+                                               const_reference value) {
+    iterator pos = _start + (position - begin());
+    if (n <= 0) return pos;
+    // 如果插入 n 后，容量不会超过上限
+    if (n <= static_cast<size_type>(_end_of_storage - end())) {
+        auto old_n = n;
+        auto old_end = _finish;
+        // 如果插入的 n 个元素比原来的末尾还要长，先插入末尾多出来的元素
+        if (n > static_cast<size_type>(end() - pos)) {
+            size_type n_at_end = n - (end() - pos);
+            _construct_at_end(n_at_end, value);
+            n -= n_at_end;
+        }
+        // 接着把 pos 到末尾的元素插入
+        // 由于 pos 可能就是末尾，所以再判断一次 n > 0
+        if (n > 0) {
+            auto value_copy = value;
+            _move_at_end(pos, old_end);
+            xutl::fill_n(pos, n, value_copy);
+        }
+    } else {
+        _reallocate_and_fill_n(pos, n, value);
     }
     return _start + n;
 }

@@ -24,6 +24,16 @@ int main(int argc, char* argv[]) {
         std::cout << i << " ";
     }
     std::cout << std::endl;
+    v.insert(v.begin() + 1, 2);
+    for (const auto& i : v) {
+        std::cout << i << " ";
+    }
+    std::cout << std::endl;
+    v.insert(v.begin() + 2, 2, 3);
+    for (const auto& i : v) {
+        std::cout << i << " ";
+    }
+    std::cout << std::endl;
     v.reserve(100);
     std::cout << v.capacity() << std::endl;
     v.shrink_to_fit();
