@@ -24,6 +24,7 @@ namespace xutl {
 // using true_type = integral_constant<bool, true>;
 // using false_type = integral_constant<bool, false>;
 
+// 提供一个 T 类型的静态常量 value，integral_constant<T, value>
 using std::integral_constant;
 
 using std::false_type;
@@ -63,9 +64,13 @@ using std::is_trivially_move_assignable;
 using std::is_constructible;
 
 // declval
+// 在没有实际创建对象的情况下，实现了创建该类型对象的效果。
+// 一般配合 decltype 使用。
 // 只有声明，没有定义，不可 ODR-use，
-// 只能用于 unevaluated context 的函数，
-// 返回 T 类型的右值引用
+// 只能用于没有实际求值的上下文中（unevaluated context），
+// 并没有创建任何对象。
+// 返回 T 类型的右值引用，即使 T 没有默认构造函数
+// 或 T 不可以创建对象（可以用于抽象基类）。
 
 template <typename T>
 T&& _declval(int);

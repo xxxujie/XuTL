@@ -21,7 +21,7 @@ namespace xutl {
 // allocator_has_construct
 // allocator 是否可以构造其实参类型
 
-// 利用逗号表达式，实际上返回值就是 true_type，前者仅用于 SFINAE
+// decltype 中利用逗号表达式，实际上返回值就是 true_type，前者仅用于 SFINAE
 template <typename Alloc, typename T, typename... Args>
 decltype(xutl::declval<Alloc>().construct(xutl::declval<T*>(),
                                           xutl::declval<Args>()...),
