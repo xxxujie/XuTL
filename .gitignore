@@ -43,8 +43,6 @@ _deps
 *.out
 *.app
 
-*.clang-format
-
 *.sh
 .cache/
 build/
